@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GraphCrypt v1.0 - Precision Algorithm Engine | Weighted A* & Caesar Cipher</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Main Style -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="theme-dark">
+    <!-- App Container -->
+    <div id="app-container" class="app-layout">
+        
+        <!-- ============================================== -->
+        <!-- SIDEBAR -->
+        <!-- ============================================== -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-container">
+                    <div class="brand-logo">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#00F0FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M2 17L12 22L22 17" stroke="#7059FE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M2 12L12 17L22 12" stroke="#00F0FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="12" cy="12" r="2" fill="#00F0FF" />
+                        </svg>
+                    </div>
+                    <div class="brand-text">
+                        <h1 class="brand-title">GraphCrypt <span class="version-tag">v1.0</span></h1>
+                        <span class="brand-subtitle">PRECISION ALGORITHM ENGINE</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Project Button -->
+            <div class="sidebar-action-top">
+                <button id="btn-new-project" class="btn btn-purple btn-block">
+                    <i data-lucide="plus" class="btn-icon"></i>
+                    <span>+ New Project</span>
+                </button>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="sidebar-nav">
+                <button id="nav-graph-editor" class="nav-item" data-tab="tab-editor">
+                    <i data-lucide="network" class="nav-icon"></i>
+                    <span>Graph Editor</span>
+                </button>
+                <button id="nav-astar" class="nav-item active" data-tab="tab-astar">
+                    <i data-lucide="compass" class="nav-icon"></i>
+                    <span>A* Pathfinding</span>
+                </button>
+                <button id="nav-encryption" class="nav-item" data-tab="tab-encryption">
+                    <i data-lucide="lock" class="nav-icon"></i>
+                    <span>Encryption</span>
+                </button>
+                <button id="nav-export" class="nav-item" data-tab="tab-export">
+                    <i data-lucide="download" class="nav-icon"></i>
+                    <span>Export</span>
+                </button>
+            </nav>
+
+            <!-- Sidebar Footer -->
+            <div class="sidebar-footer">
+                <button id="btn-about" class="nav-item nav-item-footer">
+                    <i data-lucide="info" class="nav-icon"></i>
+                    <span>About</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- ============================================== -->
+        <!-- MAIN CONTENT AREA -->
+        <!-- ============================================== -->
+        <main class="main-viewport">
+            
+            <!-- Top Workflow Breadcrumbs Bar -->
+            <header class="workflow-header">
+                <div class="workflow-breadcrumbs" id="workflow-tracker">
+                    <div class="wf-step completed" data-step="1" id="wf-step-1">
+                        <span class="wf-dot"><i data-lucide="check" class="wf-check-icon"></i></span>
+                        <span class="wf-label">Weighted Graph</span>
+                    </div>
+                    <span class="wf-separator">&gt;</span>
+
+                    <div class="wf-step active" data-step="2" id="wf-step-2">
+                        <span class="wf-dot"><span class="wf-dot-inner"></span></span>
+                        <span class="wf-label">Run A*</span>
+                    </div>
+                    <span class="wf-separator">&gt;</span>
+
+                    <div class="wf-step" data-step="3" id="wf-step-3">
+                        <span class="wf-dot"><span class="wf-dot-inner"></span></span>
+                        <span class="wf-label">Shortest Path</span>
+                    </div>
+                    <span class="wf-separator">&gt;</span>
+
+                    <div class="wf-step" data-step="4" id="wf-step-4">
+                        <span class="wf-dot"><span class="wf-dot-inner"></span></span>
+                        <span class="wf-label">Encrypt Edge Weights</span>
+                    </div>
+                    <span class="wf-separator">&gt;</span>
+
+                    <div class="wf-step" data-step="5" id="wf-step-5">
+                        <span class="wf-dot"><span class="wf-dot-inner"></span></span>
+                        <span class="wf-label">Generate TXT</span>
+                    </div>
+                    <span class="wf-separator">&gt;</span>
+
+                    <div class="wf-step" data-step="6" id="wf-step-6">
+                        <span class="wf-dot"><span class="wf-dot-inner"></span></span>
+                        <span class="wf-label">Export</span>
+                    </div>
+                </div>
+
+                <div class="header-tools">
+                    <button id="btn-quick-sample" class="btn-icon-header" title="Reload Sample Graph">
+                        <i data-lucide="rotate-ccw"></i>
+                    </button>
+                    <button id="btn-settings-dialog" class="btn-icon-header" title="Settings">
+                        <i data-lucide="settings"></i>
+                    </button>
+                    <button id="btn-help-dialog" class="btn-icon-header" title="Help Guide">
+                        <i data-lucide="help-circle"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- ============================================== -->
+            <!-- VIEW CONTAINER: DUAL VIEWS (SCREEN 1 & SCREEN 2) -->
+            <!-- ============================================== -->
+            <div class="views-wrapper">
+                
+                <!-- ------------------------------------------ -->
+                <!-- VIEW 1: GRAPH CANVAS & A* EXECUTION (SCREEN 1) -->
+                <!-- ------------------------------------------ -->
+                <section id="view-astar" class="app-view active-view">
+                    <div class="astar-split-layout">
+                        
+                        <!-- Left Side: Interactive SVG Graph Canvas -->
+                        <div class="canvas-panel">
+                            
+                            <!-- Canvas Floating Toolbar -->
+                            <div class="canvas-toolbar">
+                                <div class="toolbar-group">
+                                    <button id="tool-select" class="tool-btn active" title="Select & Drag Nodes">
+                                        <i data-lucide="mouse-pointer-2"></i>
+                                        <span>Select</span>
+                                    </button>
+                                    <button id="tool-add-node" class="tool-btn" title="Add Node (Click canvas)">
+                                        <i data-lucide="circle-dot"></i>
+                                        <span>+ Node</span>
+                                    </button>
+                                    <button id="tool-add-edge" class="tool-btn" title="Add Edge (Click two nodes)">
+                                        <i data-lucide="git-commit"></i>
+                                        <span>+ Edge</span>
+                                    </button>
+                                    <button id="tool-delete" class="tool-btn tool-btn-danger" title="Delete Selected">
+                                        <i data-lucide="trash-2"></i>
+                                        <span>Delete</span>
+                                    </button>
+                                </div>
+
+                                <div class="toolbar-divider"></div>
+
+                                <div class="toolbar-group">
+                                    <button id="tool-clear-canvas" class="tool-btn" title="Clear Canvas">
+                                        <i data-lucide="eraser"></i>
+                                        <span>Clear</span>
+                                    </button>
+                                    <button id="tool-load-sample" class="tool-btn" title="Reset Sample Graph">
+                                        <i data-lucide="refresh-cw"></i>
+                                        <span>Reset Graph</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Canvas Interactive Container -->
+                            <div id="graph-canvas-container" class="graph-viewport">
+                                <svg id="graph-svg" class="graph-svg-element" width="100%" height="100%">
+                                    <!-- Grid Pattern Definition -->
+                                    <defs>
+                                        <pattern id="smallGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+                                            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255, 255, 255, 0.04)" stroke-width="1"/>
+                                        </pattern>
+                                        <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse">
+                                            <rect width="80" height="80" fill="url(#smallGrid)"/>
+                                            <path d="M 80 0 L 0 0 0 80" fill="none" stroke="rgba(0, 240, 255, 0.07)" stroke-width="1.2"/>
+                                        </pattern>
+                                        
+                                        <!-- Glow Filter for Nodes & Edges -->
+                                        <filter id="glow-cyan" x="-50%" y="-50%" width="200%" height="200%">
+                                            <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+                                            <feMerge>
+                                                <feMergeNode in="coloredBlur"/>
+                                                <feMergeNode in="SourceGraphic"/>
+                                            </feMerge>
+                                        </filter>
+
+                                        <filter id="glow-purple" x="-50%" y="-50%" width="200%" height="200%">
+                                            <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+                                            <feMerge>
+                                                <feMergeNode in="coloredBlur"/>
+                                                <feMergeNode in="SourceGraphic"/>
+                                            </feMerge>
+                                        </filter>
+                                    </defs>
+
+                                    <!-- Grid Background Plane -->
+                                    <rect width="100%" height="100%" fill="url(#grid)" class="grid-layer" />
+
+                                    <!-- Graph Layers Group (Pan/Zoom Transformed) -->
+                                    <g id="canvas-transform-group">
+                                        <!-- Edges Layer -->
+                                        <g id="edges-layer"></g>
+                                        
+                                        <!-- Edge Weight Labels Layer -->
+                                        <g id="edge-labels-layer"></g>
+                                        
+                                        <!-- Nodes Layer -->
+                                        <g id="nodes-layer"></g>
+                                        
+                                        <!-- Animation / Highlight Layer -->
+                                        <g id="animation-layer"></g>
+                                    </g>
+                                </svg>
+
+                                <!-- Canvas Zoom Controls (Bottom Left) -->
+                                <div class="canvas-zoom-controls">
+                                    <button id="btn-zoom-in" class="zoom-btn" title="Zoom In">
+                                        <i data-lucide="zoom-in"></i>
+                                    </button>
+                                    <button id="btn-zoom-out" class="zoom-btn" title="Zoom Out">
+                                        <i data-lucide="zoom-out"></i>
+                                    </button>
+                                    <button id="btn-zoom-fit" class="zoom-btn" title="Fit to Screen">
+                                        <i data-lucide="maximize-2"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Current Canvas Mode Hint -->
+                                <div id="canvas-mode-hint" class="canvas-mode-hint">
+                                    <span>Mode: <strong>Select / Move</strong></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Side: A* Execution & Live Stats Panel -->
+                        <div class="astar-control-panel">
+                            
+                            <!-- A* Execution Card -->
+                            <div class="glass-card card-execution">
+                                <div class="card-header">
+                                    <h2 class="card-title">A* Execution</h2>
+                                    <p class="card-desc">Configure heuristic parameters and initialize pathfinding.</p>
+                                </div>
+
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="select-start-node" class="form-label">Start Node</label>
+                                        <div class="select-wrapper">
+                                            <select id="select-start-node" class="form-select">
+                                                <option value="A">A (Current)</option>
+                                            </select>
+                                            <i data-lucide="chevron-down" class="select-arrow"></i>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="select-goal-node" class="form-label">Destination</label>
+                                        <div class="select-wrapper">
+                                            <select id="select-goal-node" class="form-select">
+                                                <option value="T">T (Target)</option>
+                                            </select>
+                                            <i data-lucide="chevron-down" class="select-arrow"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="select-heuristic" class="form-label">Heuristic Function</label>
+                                    <div class="select-wrapper">
+                                        <select id="select-heuristic" class="form-select">
+                                            <option value="Euclidean Distance" selected>Euclidean Distance</option>
+                                            <option value="Manhattan Distance">Manhattan Distance</option>
+                                            <option value="Chebyshev Distance">Chebyshev Distance</option>
+                                            <option value="Diagonal / Octile">Diagonal / Octile</option>
+                                            <option value="Dijkstra (Zero Heuristic)">Dijkstra (Zero Heuristic)</option>
+                                        </select>
+                                        <i data-lucide="chevron-down" class="select-arrow"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="action-buttons-stack">
+                                    <button id="btn-run-astar" class="btn btn-purple btn-large btn-block btn-glow">
+                                        <i data-lucide="play" class="btn-icon"></i>
+                                        <span>▶ Run Algorithm</span>
+                                    </button>
+
+                                    <div class="step-controls-row">
+                                        <button id="btn-step-astar" class="btn btn-dark-outline btn-block">
+                                            <i data-lucide="skip-forward" class="btn-icon"></i>
+                                            <span>Step-by-Step</span>
+                                        </button>
+                                        <button id="btn-auto-step" class="btn btn-dark-outline" title="Auto Play Steps">
+                                            <i data-lucide="play-circle" class="btn-icon"></i>
+                                        </button>
+                                        <button id="btn-reset-steps" class="btn btn-dark-outline" title="Reset Step Animation">
+                                            <i data-lucide="rotate-ccw" class="btn-icon"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Live Execution Stats Card -->
+                            <div class="glass-card card-stats">
+                                <div class="card-header-small">
+                                    <span class="stats-card-title">LIVE EXECUTION STATS</span>
+                                </div>
+
+                                <div class="stats-mini-grid">
+                                    <div class="stat-box">
+                                        <span class="stat-label">Nodes Visited</span>
+                                        <span id="stat-nodes-visited" class="stat-value">0</span>
+                                    </div>
+                                    <div class="stat-box">
+                                        <span class="stat-label">Edges Eval</span>
+                                        <span id="stat-edges-eval" class="stat-value">0</span>
+                                    </div>
+                                </div>
+
+                                <div class="stat-card-featured">
+                                    <div class="stat-featured-content">
+                                        <span class="stat-label">Current Path Cost (f(n))</span>
+                                        <span id="stat-path-cost" class="stat-value-large">0.00</span>
+                                    </div>
+                                    <div class="stat-featured-icon">
+                                        <i data-lucide="route"></i>
+                                    </div>
+                                </div>
+
+                                <div class="stat-bottom-row">
+                                    <span class="stat-sublabel">Execution Time</span>
+                                    <span id="stat-exec-time" class="stat-time-tag">0ms</span>
+                                </div>
+                            </div>
+
+                            <!-- Real-time Step Log Console (Collapsible) -->
+                            <div class="glass-card card-log">
+                                <div class="log-header" id="log-toggle">
+                                    <div class="log-title-area">
+                                        <i data-lucide="terminal" class="log-icon"></i>
+                                        <span>Algorithm Step Telemetry</span>
+                                    </div>
+                                    <span id="step-counter-tag" class="step-tag">Ready</span>
+                                </div>
+                                <div id="step-log-body" class="log-body">
+                                    <div class="log-entry info">System ready. Click "▶ Run Algorithm" to initiate weighted A* search.</div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ------------------------------------------ -->
+                <!-- VIEW 2: ENCRYPTION & DATA EXPORT (SCREEN 2) -->
+                <!-- ------------------------------------------ -->
+                <section id="view-encryption" class="app-view">
+                    <div class="crypto-grid-layout">
+                        
+                        <!-- Column 1: Cryptography Configuration -->
+                        <div class="crypto-col-config">
+                            <div class="glass-card card-crypto-config">
+                                <div class="card-header-iconic">
+                                    <div class="card-icon-glow">
+                                        <i data-lucide="shield-check"></i>
+                                    </div>
+                                    <div>
+                                        <h2 class="card-title">Cryptography Configuration</h2>
+                                    </div>
+                                </div>
+
+                                <div class="form-group mt-4">
+                                    <label for="select-cipher-method" class="form-label">Cipher Method</label>
+                                    <div class="select-wrapper">
+                                        <select id="select-cipher-method" class="form-select">
+                                            <option value="Caesar Cipher" selected>Caesar Cipher</option>
+                                            <option value="Numeric Modulo 10">Numeric Modulo 10</option>
+                                        </select>
+                                        <i data-lucide="chevron-down" class="select-arrow"></i>
+                                    </div>
+                                </div>
+
+                                <div class="form-group mt-3">
+                                    <label for="input-shift-val" class="form-label">Shift / Key Value</label>
+                                    <div class="input-stepper-wrapper">
+                                        <button id="btn-shift-dec" class="stepper-btn">-</button>
+                                        <input type="number" id="input-shift-val" class="form-input text-center" value="3" min="-9" max="9" step="1">
+                                        <button id="btn-shift-inc" class="stepper-btn">+</button>
+                                    </div>
+                                    <p class="form-hint">Applies numeric shift to edge weights in shortest path.</p>
+                                </div>
+
+                                <div class="cipher-formula-box">
+                                    <span class="formula-label">Transformation Formula:</span>
+                                    <code>(weight_digit + shift) mod 10</code>
+                                </div>
+
+                                <div class="crypto-action-bottom">
+                                    <button id="btn-apply-transformation" class="btn btn-cyan btn-block">
+                                        <i data-lucide="refresh-cw" class="btn-icon"></i>
+                                        <span>Apply Transformation</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Column 2: Visual Transformation Panel -->
+                        <div class="crypto-col-transform">
+                            <div class="glass-card card-visual-transform">
+                                <div class="card-header-iconic">
+                                    <div class="card-icon-glow orange-glow">
+                                        <i data-lucide="arrow-left-right"></i>
+                                    </div>
+                                    <div>
+                                        <h2 class="card-title">Visual Transformation</h2>
+                                    </div>
+                                </div>
+
+                                <div class="transform-filter-tabs">
+                                    <button id="tab-transform-path" class="filter-tab active">Shortest Path Edges</button>
+                                    <button id="tab-transform-all" class="filter-tab">All Graph Edges</button>
+                                </div>
+
+                                <!-- Dynamic List of Transformation Cards -->
+                                <div id="transformations-container" class="transformations-scroll-list">
+                                    <!-- Populated via JavaScript -->
+                                    <div class="transform-card sample-card">
+                                        <div class="t-node-header">
+                                            <span class="t-node">A</span>
+                                            <i data-lucide="arrow-right" class="t-arrow-icon"></i>
+                                            <span class="t-node">B</span>
+                                        </div>
+                                        <div class="t-values-row">
+                                            <div class="t-val-box">
+                                                <span class="t-number">5</span>
+                                                <span class="t-sub">Original</span>
+                                            </div>
+                                            <div class="t-shift-badge">
+                                                <span class="t-shift-text">Shift</span>
+                                                <span class="t-shift-num">+3</span>
+                                                <i data-lucide="arrow-right"></i>
+                                            </div>
+                                            <div class="t-val-box active-enc">
+                                                <span class="t-number cyan-txt">8</span>
+                                                <span class="t-sub cyan-txt">Encrypted</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- Column 3: Results Summary & TXT Preview & Export -->
+                        <div class="crypto-col-preview">
+                            
+                            <!-- Results Summary Card -->
+                            <div class="glass-card card-results-summary">
+                                <h3 class="card-title-sub">Results Summary</h3>
+                                
+                                <div class="summary-field">
+                                    <span class="summary-label">Shortest Path</span>
+                                    <div id="summary-path-display" class="summary-path-box">
+                                        <span class="path-node-pill">A</span>
+                                        <span class="path-arrow">→</span>
+                                        <span class="path-node-pill">C</span>
+                                        <span class="path-arrow">→</span>
+                                        <span class="path-node-pill">D</span>
+                                        <span class="path-arrow">→</span>
+                                        <span class="path-node-pill">E</span>
+                                    </div>
+                                </div>
+
+                                <div class="summary-row-weight">
+                                    <span class="summary-label">Total Original Weight</span>
+                                    <span id="summary-total-weight" class="summary-val-badge">11</span>
+                                </div>
+
+                                <div class="summary-status-badge">
+                                    <i data-lucide="check" class="status-check"></i>
+                                    <span>PROCESS COMPLETED</span>
+                                </div>
+                            </div>
+
+                            <!-- output.txt Preview Card -->
+                            <div class="glass-card card-txt-preview">
+                                <div class="preview-header">
+                                    <div class="preview-title">
+                                        <i data-lucide="file-code" class="file-icon"></i>
+                                        <span>output.txt Preview</span>
+                                    </div>
+                                    <div class="preview-format-selector">
+                                        <button id="btn-fmt-concise" class="fmt-btn active">Concise</button>
+                                        <button id="btn-fmt-full" class="fmt-btn">Full Report</button>
+                                    </div>
+                                </div>
+
+                                <div class="terminal-preview-box">
+                                    <pre id="output-txt-content" class="terminal-code">
+<span class="txt-header">--- ENCRYPTED EDGE WEIGHTS ---</span>
+A -&gt; B : 8
+A -&gt; C : 6
+B -&gt; D : 7
+C -&gt; D : 5
+D -&gt; E : 9
+
+<span class="txt-meta">--- Metadata ---</span>
+Cipher: Caesar Cipher
+Shift: +3
+Algorithm: A*
+Heuristic: Euclidean Distance
+                                    </pre>
+                                </div>
+
+                                <div class="preview-action-row">
+                                    <button id="btn-preview-txt" class="btn btn-dark-outline btn-sm">
+                                        <i data-lucide="eye" class="btn-icon"></i>
+                                        <span>Preview TXT</span>
+                                    </button>
+                                    <button id="btn-generate-txt" class="btn btn-dark-outline btn-sm">
+                                        <i data-lucide="file-plus" class="btn-icon"></i>
+                                        <span>Generate TXT</span>
+                                    </button>
+                                </div>
+
+                                <button id="btn-export-txt" class="btn btn-purple btn-large btn-block mt-3 btn-glow">
+                                    <i data-lucide="download" class="btn-icon"></i>
+                                    <span>⬇ Export Encrypted TXT</span>
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODALS & DIALOGS -->
+    <!-- ============================================== -->
+
+    <!-- Add/Edit Node Modal -->
+    <div id="modal-node" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modal-node-title" class="modal-title">Create New Node</h3>
+                <button class="modal-close-btn" data-close-modal="modal-node">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="input-node-name" class="form-label">Node Identifier / Name</label>
+                    <input type="text" id="input-node-name" class="form-input" placeholder="e.g. F, G, Node-1">
+                </div>
+                <input type="hidden" id="input-node-x" value="250">
+                <input type="hidden" id="input-node-y" value="250">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-dark-outline" data-close-modal="modal-node">Cancel</button>
+                <button id="btn-save-node" class="btn btn-cyan">Save Node</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Edge Modal -->
+    <div id="modal-edge" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modal-edge-title" class="modal-title">Connect Nodes with Weighted Edge</h3>
+                <button class="modal-close-btn" data-close-modal="modal-edge">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="select-edge-source" class="form-label">From Node</label>
+                        <select id="select-edge-source" class="form-select"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="select-edge-target" class="form-label">To Node</label>
+                        <select id="select-edge-target" class="form-select"></select>
+                    </div>
+                </div>
+                <div class="form-group mt-3">
+                    <label for="input-edge-weight" class="form-label">Numerical Weight / Cost (≥ 0)</label>
+                    <input type="number" id="input-edge-weight" class="form-input" placeholder="e.g. 5, 12, 3.5" min="0" step="any" value="5">
+                </div>
+                <input type="hidden" id="input-edit-edge-id" value="">
+            </div>
+            <div class="modal-footer">
+                <button id="btn-delete-edge-modal" class="btn btn-danger hidden">Delete Edge</button>
+                <button class="btn btn-dark-outline" data-close-modal="modal-edge">Cancel</button>
+                <button id="btn-save-edge" class="btn btn-cyan">Save Connection</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Reset / New Project Modal -->
+    <div id="modal-confirm" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="confirm-title" class="modal-title">Confirm Action</h3>
+                <button class="modal-close-btn" data-close-modal="modal-confirm">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-message" class="modal-desc">Are you sure you want to start a new project? This will clear or reset the current graph.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-dark-outline" data-close-modal="modal-confirm">Cancel</button>
+                <button id="btn-confirm-action" class="btn btn-purple">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Modal -->
+    <div id="modal-about" class="modal-backdrop hidden">
+        <div class="modal-card modal-card-lg">
+            <div class="modal-header">
+                <h3 class="modal-title">About GraphCrypt v1.0</h3>
+                <button class="modal-close-btn" data-close-modal="modal-about">&times;</button>
+            </div>
+            <div class="modal-body modal-scrollable">
+                <h4>Precision Algorithm Engine: Weighted A* & Caesar Cipher</h4>
+                <p>GraphCrypt v1.0 integrates weighted pathfinding with numeric cryptography into a unified end-to-end analytical workflow.</p>
+                
+                <h5>Workflow Sequence:</h5>
+                <ol class="about-list">
+                    <li><strong>Weighted Graph:</strong> Build or edit nodes and weighted edges on the interactive canvas.</li>
+                    <li><strong>A* Pathfinding:</strong> Find the optimal route with heuristic functions: \(f(n) = g(n) + h(n)\).</li>
+                    <li><strong>Shortest Path:</strong> Compute the exact minimal sum of original numerical edge weights.</li>
+                    <li><strong>Encrypt Edge Weights:</strong> Shift edge weights using numeric Modulo-10 Caesar cipher: \((d + \text{shift}) \pmod{10}\).</li>
+                    <li><strong>Generate TXT & Export:</strong> Inspect formatted output and download genuine <code>encrypted_edge_weights.txt</code>.</li>
+                </ol>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-cyan" data-close-modal="modal-about">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-stack"></div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/graph_editor.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/astar_ui.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/crypto_ui.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+    <script>
+        // Initialize Lucide icons on DOM ready
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
