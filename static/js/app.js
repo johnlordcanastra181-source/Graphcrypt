@@ -67,23 +67,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     const viewEncryption = document.getElementById('view-encryption');
 
     function switchView(targetTab) {
-        navItems.forEach(btn => btn.classList.remove('active'));
+        const allNavItems = document.querySelectorAll('.sidebar-nav .nav-item');
+        allNavItems.forEach(btn => btn.classList.remove('active'));
         
+        // Hide all views first
+        document.querySelectorAll('.app-view, .text-suite-view').forEach(v => v.classList.remove('active-view'));
+
         if (targetTab === 'tab-editor' || targetTab === 'tab-astar') {
             document.getElementById(targetTab === 'tab-editor' ? 'nav-graph-editor' : 'nav-astar')?.classList.add('active');
             viewAstar.classList.add('active-view');
-            viewEncryption.classList.remove('active-view');
             editor.setMode('select');
             updateWorkflowStep(targetTab === 'tab-editor' ? 1 : 2);
         } else if (targetTab === 'tab-encryption' || targetTab === 'tab-export') {
             document.getElementById(targetTab === 'tab-encryption' ? 'nav-encryption' : 'nav-export')?.classList.add('active');
             viewEncryption.classList.add('active-view');
-            viewAstar.classList.remove('active-view');
             updateWorkflowStep(targetTab === 'tab-encryption' ? 4 : 6);
             cryptoUI.fetchTransformations();
             cryptoUI.fetchTxtPreview();
+        } else {
+            // Text Suite Views
+            const viewMap = {
+                'tab-datasets': { nav: 'nav-datasets', view: 'view-datasets' },
+                'tab-pattern': { nav: 'nav-pattern', view: 'view-pattern' },
+                'tab-compression': { nav: 'nav-compression', view: 'view-compression' },
+                'tab-optimization': { nav: 'nav-optimization', view: 'view-optimization' },
+                'tab-parallel': { nav: 'nav-parallel', view: 'view-parallel' },
+                'tab-performance': { nav: 'nav-performance', view: 'view-performance' }
+            };
+
+            const cfg = viewMap[targetTab];
+            if (cfg) {
+                document.getElementById(cfg.nav)?.classList.add('active');
+                document.getElementById(cfg.view)?.classList.add('active-view');
+            }
         }
     }
+    window.switchView = switchView;
 
     navItems.forEach(item => {
         item.addEventListener('click', () => {

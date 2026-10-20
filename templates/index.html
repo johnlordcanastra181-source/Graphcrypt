@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GraphCrypt v1.0 - Precision Algorithm Engine | Weighted A* & Caesar Cipher</title>
+    <title>Intelligent Text Search, Compression, and Optimization System | BISU Final Project & GraphCrypt</title>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,6 +15,7 @@
     
     <!-- Main Style -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/text_suite.css') }}">
 </head>
 <body class="theme-dark">
     <!-- App Container -->
@@ -35,8 +36,8 @@
                         </svg>
                     </div>
                     <div class="brand-text">
-                        <h1 class="brand-title">GraphCrypt <span class="version-tag">v1.0</span></h1>
-                        <span class="brand-subtitle">PRECISION ALGORITHM ENGINE</span>
+                        <h1 class="brand-title">GraphCrypt <span class="version-tag">BISU v2.0</span></h1>
+                        <span class="brand-subtitle">INTELLIGENT ALGORITHM SUITE</span>
                     </div>
                 </div>
             </div>
@@ -51,6 +52,7 @@
 
             <!-- Navigation Links -->
             <nav class="sidebar-nav">
+                <div class="nav-section-title">Graph Engine</div>
                 <button id="nav-graph-editor" class="nav-item" data-tab="tab-editor">
                     <i data-lucide="network" class="nav-icon"></i>
                     <span>Graph Editor</span>
@@ -66,6 +68,32 @@
                 <button id="nav-export" class="nav-item" data-tab="tab-export">
                     <i data-lucide="download" class="nav-icon"></i>
                     <span>Export</span>
+                </button>
+
+                <div class="nav-section-title">Intelligent Text Suite</div>
+                <button id="nav-datasets" class="nav-item" data-tab="tab-datasets">
+                    <i data-lucide="folder-open" class="nav-icon"></i>
+                    <span>Text Datasets</span>
+                </button>
+                <button id="nav-pattern" class="nav-item" data-tab="tab-pattern">
+                    <i data-lucide="search" class="nav-icon"></i>
+                    <span>Pattern Matching</span>
+                </button>
+                <button id="nav-compression" class="nav-item" data-tab="tab-compression">
+                    <i data-lucide="file-archive" class="nav-icon"></i>
+                    <span>Text Compression</span>
+                </button>
+                <button id="nav-optimization" class="nav-item" data-tab="tab-optimization">
+                    <i data-lucide="cpu" class="nav-icon"></i>
+                    <span>Optimization (GA)</span>
+                </button>
+                <button id="nav-parallel" class="nav-item" data-tab="tab-parallel">
+                    <i data-lucide="zap" class="nav-icon"></i>
+                    <span>Parallel & Random</span>
+                </button>
+                <button id="nav-performance" class="nav-item" data-tab="tab-performance">
+                    <i data-lucide="bar-chart-2" class="nav-icon"></i>
+                    <span>Complexity Matrix</span>
                 </button>
             </nav>
 
@@ -555,6 +583,572 @@ Heuristic: Euclidean Distance
                     </div>
                 </section>
 
+                <!-- ------------------------------------------ -->
+                <!-- VIEW 3: TEXT INPUT & DATASET MANAGER -->
+                <!-- ------------------------------------------ -->
+                <section id="view-datasets" class="text-suite-view">
+                    <div class="suite-page-header">
+                        <div>
+                            <h2 class="suite-header-title">
+                                <i data-lucide="folder-open"></i>
+                                <span>Text Input / Dataset Manager</span>
+                            </h2>
+                            <p class="suite-header-subtitle">Load pre-configured datasets, upload custom .txt files, or input text directly for analysis.</p>
+                        </div>
+                        <span class="bisu-badge"><i data-lucide="award"></i> BISU F-AQA-INS-002</span>
+                    </div>
+
+                    <!-- Preset Samples -->
+                    <div class="glass-card mb-4" style="padding:16px;">
+                        <div class="card-header-small mb-3">
+                            <span class="stats-card-title">PRE-CONFIGURED BENCHMARK DATASETS</span>
+                        </div>
+                        <div id="sample-presets-list" class="sample-presets-grid">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Editor and Controls -->
+                    <div class="suite-grid-2">
+                        <div class="dataset-editor-box">
+                            <div class="editor-toolbar">
+                                <div class="editor-stats-bar">
+                                    <span>Chars: <strong class="stat-char-count">0</strong></span>
+                                    <span>Words: <strong class="stat-word-count">0</strong></span>
+                                    <span>Lines: <strong class="stat-line-count">0</strong></span>
+                                    <span>Size: <strong class="stat-byte-count">0</strong> B</span>
+                                </div>
+                                <div>
+                                    <label for="input-file-upload" class="btn btn-dark-outline btn-sm" style="cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                                        <i data-lucide="upload" style="width:14px; height:14px;"></i>
+                                        <span>Upload .txt</span>
+                                    </label>
+                                    <input type="file" id="input-file-upload" accept=".txt" style="display:none;">
+                                </div>
+                            </div>
+                            <textarea id="corpus-text-input" class="suite-textarea" placeholder="Paste or type text data here..."></textarea>
+                        </div>
+
+                        <div class="glass-card" style="padding:20px; display:flex; flex-direction:column; justify-content:space-between;">
+                            <div>
+                                <h3 class="card-title-sub">Quick Algorithm Distribution</h3>
+                                <p class="card-desc" style="margin-bottom:20px;">Directly route this text corpus into any algorithmic processing pipeline with automatic configuration:</p>
+
+                                <div style="display:flex; flex-direction:column; gap:12px;">
+                                    <button id="btn-send-to-pattern" class="btn btn-cyan btn-large btn-block" style="justify-content:flex-start;">
+                                        <i data-lucide="search" class="btn-icon"></i>
+                                        <span>▶ Route to Pattern Matching (KMP, BM, RK)</span>
+                                    </button>
+                                    <button id="btn-send-to-compression" class="btn btn-purple btn-large btn-block" style="justify-content:flex-start;">
+                                        <i data-lucide="file-archive" class="btn-icon"></i>
+                                        <span>▶ Route to Text Compression (Huffman, RLE, LZW)</span>
+                                    </button>
+                                    <button id="btn-send-to-parallel" class="btn btn-dark-outline btn-large btn-block" style="justify-content:flex-start; color:#00FF9D; border-color:rgba(0,255,157,0.3);">
+                                        <i data-lucide="zap" class="btn-icon"></i>
+                                        <span>▶ Route to Parallel Multi-Threaded Search</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:12px; margin-top:20px;">
+                                <div style="font-size:0.75rem; color:#94A3B8;">
+                                    <i data-lucide="info" style="width:13px; height:13px; vertical-align:middle; margin-right:4px; color:#00F0FF;"></i>
+                                    <strong>Syllabus Note:</strong> The active text is synchronized across all feature modules automatically for benchmarking.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ------------------------------------------ -->
+                <!-- VIEW 4: PATTERN MATCHING FEATURE -->
+                <!-- ------------------------------------------ -->
+                <section id="view-pattern" class="text-suite-view">
+                    <div class="suite-page-header">
+                        <div>
+                            <h2 class="suite-header-title">
+                                <i data-lucide="search"></i>
+                                <span>Pattern Matching Feature</span>
+                            </h2>
+                            <p class="suite-header-subtitle">Knuth-Morris-Pratt, Boyer-Moore, Rabin-Karp, Brute Force & Approximate String Matching.</p>
+                        </div>
+                        <span class="bisu-badge"><i data-lucide="check-circle-2"></i> All Matchers Enabled</span>
+                    </div>
+
+                    <div class="suite-grid-2">
+                        <!-- Controls -->
+                        <div class="glass-card" style="padding:20px;">
+                            <div class="card-header-small"><span class="stats-card-title">SEARCH CONFIGURATION</span></div>
+
+                            <div class="form-group mt-3">
+                                <label for="select-pattern-algo" class="form-label">Algorithm Selection</label>
+                                <div class="select-wrapper">
+                                    <select id="select-pattern-algo" class="form-select">
+                                        <option value="All" selected>All Matchers (Side-by-Side Comparison)</option>
+                                        <option value="Knuth-Morris-Pratt (KMP)">Knuth-Morris-Pratt (KMP)</option>
+                                        <option value="Boyer-Moore">Boyer-Moore (Bad Character Heuristic)</option>
+                                        <option value="Rabin-Karp">Rabin-Karp (Rolling Polynomial Hash)</option>
+                                        <option value="Brute Force">Brute Force String Matching</option>
+                                        <option value="Approximate Matching">Approximate Matching (Levenshtein Distance)</option>
+                                    </select>
+                                    <i data-lucide="chevron-down" class="select-arrow"></i>
+                                </div>
+                            </div>
+
+                            <div class="form-group mt-3">
+                                <label for="input-search-pattern" class="form-label">Target Pattern to Search</label>
+                                <div style="display:flex; gap:8px;">
+                                    <input type="text" id="input-search-pattern" class="form-input" value="algorithm" placeholder="Enter word or substring...">
+                                    <button id="btn-run-pattern-search" class="btn btn-cyan btn-glow">
+                                        <i data-lucide="search" class="btn-icon"></i>
+                                        <span>Search</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="group-approx-distance" class="form-group mt-3" style="display:none;">
+                                <label for="input-approx-dist" class="form-label">Max Allowed Edit Distance (Levenshtein)</label>
+                                <input type="number" id="input-approx-dist" class="form-input" value="1" min="1" max="5">
+                                <p class="form-hint">Matches strings with up to k insertions, deletions, or substitutions.</p>
+                            </div>
+
+                            <div class="form-group mt-3">
+                                <label for="pattern-search-text" class="form-label">Target Text Corpus</label>
+                                <textarea id="pattern-search-text" class="suite-textarea" style="min-height:160px; font-size:0.82rem;"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Highlights and Results -->
+                        <div class="glass-card" style="padding:20px; display:flex; flex-direction:column;">
+                            <div class="card-header-small"><span class="stats-card-title">MATCH VISUALIZER & HIGHLIGHTS</span></div>
+
+                            <div class="stats-mini-grid mt-2 mb-3">
+                                <div class="stat-box">
+                                    <span class="stat-label">Total Matches</span>
+                                    <span id="stat-pattern-matches" class="stat-value">0</span>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-label">Indices Found</span>
+                                    <span id="stat-pattern-indices" class="stat-value" style="font-size:0.85rem; font-family:'JetBrains Mono'; color:#00FF9D;">-</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Live Match Highlighting in Corpus:</label>
+                                <div id="pattern-highlight-viewer" class="match-highlight-container">
+                                    Click "Search" above to inspect highlighted pattern matches in text.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comparison Table Card -->
+                    <div id="pattern-comparison-card" class="glass-card mt-4" style="padding:20px;">
+                        <div class="card-header-small"><span class="stats-card-title">ALGORITHMIC PERFORMANCE & COMPARISONS BREAKDOWN</span></div>
+                        <div style="overflow-x:auto;">
+                            <table class="suite-table">
+                                <thead>
+                                    <tr>
+                                        <th>Algorithm</th>
+                                        <th>Matches Found</th>
+                                        <th>Character Comparisons</th>
+                                        <th>Execution Time (µs)</th>
+                                        <th>Heuristic Telemetry</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pattern-comparison-table-body">
+                                    <!-- Populated dynamically via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ------------------------------------------ -->
+                <!-- VIEW 5: TEXT COMPRESSION FEATURE -->
+                <!-- ------------------------------------------ -->
+                <section id="view-compression" class="text-suite-view">
+                    <div class="suite-page-header">
+                        <div>
+                            <h2 class="suite-header-title">
+                                <i data-lucide="file-archive"></i>
+                                <span>Text Compression Feature</span>
+                            </h2>
+                            <p class="suite-header-subtitle">Huffman Coding, Run-Length Encoding (RLE) & LZW Dictionary Compression.</p>
+                        </div>
+                        <span id="comp-lossless-badge" class="badge-code badge-green">✓ Lossless Verification Ready</span>
+                    </div>
+
+                    <!-- Metric Stats Bar -->
+                    <div class="compression-stats-row">
+                        <div class="comp-stat-card">
+                            <span class="comp-stat-label">Original Size</span>
+                            <span id="comp-stat-orig-size" class="comp-stat-val">0 B</span>
+                        </div>
+                        <div class="comp-stat-card">
+                            <span class="comp-stat-label">Compressed Size</span>
+                            <span id="comp-stat-comp-size" class="comp-stat-val" style="color:#00F0FF;">0 B</span>
+                        </div>
+                        <div class="comp-stat-card">
+                            <span class="comp-stat-label">Compression Ratio</span>
+                            <span id="comp-stat-ratio" class="comp-stat-val" style="color:#A78BFA;">0%</span>
+                            <div class="comp-ratio-bar-wrap"><div id="comp-ratio-progress" class="comp-ratio-fill" style="width:0%;"></div></div>
+                        </div>
+                        <div class="comp-stat-card">
+                            <span class="comp-stat-label">Space Savings</span>
+                            <span id="comp-stat-savings" class="comp-stat-val" style="color:#00FF9D;">0%</span>
+                        </div>
+                    </div>
+
+                    <div class="suite-grid-2">
+                        <!-- Controls -->
+                        <div class="glass-card" style="padding:20px;">
+                            <div class="card-header-small"><span class="stats-card-title">COMPRESSION CONTROLLER</span></div>
+
+                            <div class="form-group mt-3">
+                                <label for="select-comp-method" class="form-label">Compression Method</label>
+                                <div class="select-wrapper">
+                                    <select id="select-comp-method" class="form-select">
+                                        <option value="Huffman" selected>Huffman Coding (Optimal Prefix Tree)</option>
+                                        <option value="RLE">Run-Length Encoding (RLE)</option>
+                                        <option value="LZW">LZW Dictionary Compression</option>
+                                    </select>
+                                    <i data-lucide="chevron-down" class="select-arrow"></i>
+                                </div>
+                            </div>
+
+                            <div class="form-group mt-3">
+                                <label for="comp-source-text" class="form-label">Input Text to Compress</label>
+                                <textarea id="comp-source-text" class="suite-textarea" style="min-height:180px; font-size:0.82rem;"></textarea>
+                            </div>
+
+                            <div style="display:flex; gap:10px; margin-top:14px;">
+                                <button id="btn-run-compression" class="btn btn-purple btn-large btn-block btn-glow">
+                                    <i data-lucide="play" class="btn-icon"></i>
+                                    <span>▶ Compress Text</span>
+                                </button>
+                                <button id="btn-compress-compare-all" class="btn btn-cyan btn-large btn-block">
+                                    <i data-lucide="layers" class="btn-icon"></i>
+                                    <span>⚡ Compare All 3 Methods</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Method Specific Telemetry -->
+                        <div class="glass-card" style="padding:20px;">
+                            <div class="card-header-small"><span class="stats-card-title">ENCODING TELEMETRY & DICTIONARY</span></div>
+                            <div id="comp-method-details" style="min-height:260px; margin-top:12px;">
+                                <div class="log-entry info">Click "▶ Compress Text" to inspect generated prefix codes or dictionary entries.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Compare All Card (Hidden by default) -->
+                    <div id="comp-compare-all-card" class="glass-card mt-4 hidden" style="padding:20px;">
+                        <div class="card-header-small"><span class="stats-card-title">COMPRESSION METHODS COMPARATIVE BENCHMARK</span></div>
+                        <div style="overflow-x:auto;">
+                            <table class="suite-table">
+                                <thead>
+                                    <tr>
+                                        <th>Method</th>
+                                        <th>Original Size</th>
+                                        <th>Compressed Size</th>
+                                        <th>Compression Ratio</th>
+                                        <th>Space Savings</th>
+                                        <th>Integrity</th>
+                                        <th>Runtime</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="comp-compare-table-body">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ------------------------------------------ -->
+                <!-- VIEW 6: OPTIMIZATION FEATURE (GA & KNAPSACK) -->
+                <!-- ------------------------------------------ -->
+                <section id="view-optimization" class="text-suite-view">
+                    <div class="suite-page-header">
+                        <div>
+                            <h2 class="suite-header-title">
+                                <i data-lucide="cpu"></i>
+                                <span>Optimization Feature</span>
+                            </h2>
+                            <p class="suite-header-subtitle">Genetic Algorithm Metaheuristic & Combinatorial 0/1 Knapsack Optimization.</p>
+                        </div>
+                        <span class="bisu-badge"><i data-lucide="trending-up"></i> Evolutionary & Exact Solvers</span>
+                    </div>
+
+                    <div class="suite-grid-2">
+                        <!-- GA Controls -->
+                        <div class="glass-card" style="padding:20px;">
+                            <div class="card-header-small"><span class="stats-card-title">GENETIC ALGORITHM PARAMETERS</span></div>
+
+                            <div class="form-grid mt-3">
+                                <div class="form-group">
+                                    <label class="form-label">Population Size</label>
+                                    <input type="number" id="input-ga-pop" class="form-input" value="40" min="10" max="200">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Generations</label>
+                                    <input type="number" id="input-ga-gens" class="form-input" value="50" min="10" max="500">
+                                </div>
+                            </div>
+
+                            <div class="form-grid mt-2">
+                                <div class="form-group">
+                                    <label class="form-label">Crossover Rate</label>
+                                    <input type="number" id="input-ga-cx" class="form-input" value="0.8" step="0.05" min="0.1" max="1.0">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Mutation Rate</label>
+                                    <input type="number" id="input-ga-mut" class="form-input" value="0.05" step="0.01" min="0.01" max="0.5">
+                                </div>
+                            </div>
+
+                            <div class="form-group mt-2">
+                                <label class="form-label">Knapsack Weight Capacity Limit</label>
+                                <input type="number" id="input-ga-capacity" class="form-input" value="50" min="10" max="200">
+                            </div>
+
+                            <div style="display:flex; gap:10px; margin-top:16px;">
+                                <button id="btn-run-ga" class="btn btn-purple btn-large btn-block btn-glow">
+                                    <i data-lucide="play" class="btn-icon"></i>
+                                    <span>▶ Run Genetic Algorithm</span>
+                                </button>
+                                <button id="btn-run-knapsack" class="btn btn-dark-outline btn-large btn-block">
+                                    <i data-lucide="scale" class="btn-icon"></i>
+                                    <span>Compare DP vs Greedy</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- GA Live Convergence Visualizer -->
+                        <div class="glass-card" style="padding:20px; display:flex; flex-direction:column;">
+                            <div class="card-header-small"><span class="stats-card-title">GENERATION FITNESS CONVERGENCE</span></div>
+
+                            <canvas id="ga-convergence-canvas" class="ga-canvas-chart mt-3"></canvas>
+
+                            <div class="stats-mini-grid mt-3">
+                                <div class="stat-box">
+                                    <span class="stat-label">Best Fitness</span>
+                                    <span id="ga-result-fitness" class="stat-value" style="color:#00F0FF;">0</span>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-label">Packed Weight</span>
+                                    <span id="ga-result-weight" class="stat-value">0 / 50</span>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-label">Optimality</span>
+                                    <span id="ga-result-optimality" class="stat-value" style="font-size:0.85rem; color:#00FF9D;">-</span>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-label">Time</span>
+                                    <span id="ga-result-time" class="stat-value" style="font-size:0.85rem; color:#A78BFA;">0 ms</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Selected Items & Comparison -->
+                    <div class="suite-grid-2 mt-4">
+                        <div class="glass-card" style="padding:20px;">
+                            <div class="card-header-small"><span class="stats-card-title">OPTIMALLY SELECTED DATA ITEMS / TEXT CHUNKS</span></div>
+                            <div id="ga-selected-items-list" style="max-height:220px; overflow-y:auto; margin-top:10px;">
+                                <div class="log-entry info">Run GA to view chromosome selection.</div>
+                            </div>
+                        </div>
+
+                        <div id="knapsack-compare-card" class="glass-card" style="padding:20px;">
+                            <div class="card-header-small"><span class="stats-card-title">DP (EXACT) VS GREEDY HEURISTIC COMPARISON</span></div>
+                            <table class="suite-table">
+                                <thead>
+                                    <tr><th>Method</th><th>Total Value</th><th>Weight</th><th>Items</th><th>Runtime</th><th>Optimality</th></tr>
+                                </thead>
+                                <tbody id="knapsack-compare-table-body">
+                                    <tr><td colspan="6" style="color:#64748B;">Click "Compare DP vs Greedy" to execute benchmark.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ------------------------------------------ -->
+                <!-- VIEW 7: PARALLEL & RANDOMIZED ALGORITHMS -->
+                <!-- ------------------------------------------ -->
+                <section id="view-parallel" class="text-suite-view">
+                    <div class="suite-page-header">
+                        <div>
+                            <h2 class="suite-header-title">
+                                <i data-lucide="zap"></i>
+                                <span>Parallel & Randomized Algorithms</span>
+                            </h2>
+                            <p class="suite-header-subtitle">Multi-Threaded Pattern Search with Speedup Telemetry & Randomized QuickSort / QuickSelect.</p>
+                        </div>
+                        <span class="bisu-badge"><i data-lucide="cpu"></i> Multi-Threaded & Monte Carlo</span>
+                    </div>
+
+                    <div class="suite-grid-2">
+                        <!-- Parallel Search Card -->
+                        <div class="glass-card" style="padding:20px;">
+                            <div class="card-header-small"><span class="stats-card-title">PARALLEL MULTI-THREADED SEARCH</span></div>
+
+                            <div class="form-group mt-3">
+                                <label for="select-par-workers" class="form-label">Worker Thread Concurrency (Pool Size)</label>
+                                <div class="select-wrapper">
+                                    <select id="select-par-workers" class="form-select">
+                                        <option value="2">2 Concurrent Worker Threads</option>
+                                        <option value="4" selected>4 Concurrent Worker Threads</option>
+                                        <option value="8">8 Concurrent Worker Threads</option>
+                                        <option value="16">16 Concurrent Worker Threads</option>
+                                    </select>
+                                    <i data-lucide="chevron-down" class="select-arrow"></i>
+                                </div>
+                            </div>
+
+                            <div class="form-group mt-3">
+                                <label for="input-par-pattern" class="form-label">Pattern to Search Across Partitions</label>
+                                <input type="text" id="input-par-pattern" class="form-input" value="algorithm">
+                            </div>
+
+                            <div class="form-group mt-3">
+                                <label for="par-search-text" class="form-label">Target Text Corpus</label>
+                                <textarea id="par-search-text" class="suite-textarea" style="min-height:140px; font-size:0.82rem;"></textarea>
+                            </div>
+
+                            <button id="btn-run-parallel-search" class="btn btn-cyan btn-large btn-block mt-3 btn-glow">
+                                <i data-lucide="zap" class="btn-icon"></i>
+                                <span>▶ Execute Parallel Search</span>
+                            </button>
+
+                            <!-- Speedup Gauge -->
+                            <div class="speedup-gauge">
+                                <div>
+                                    <span class="comp-stat-label">Measured Speedup:</span>
+                                    <div id="stat-par-speedup" class="speedup-multiplier">0.0x</div>
+                                </div>
+                                <div style="font-size:0.8rem; color:#94A3B8; line-height:1.6;">
+                                    <div>Seq Runtime: <strong id="stat-par-seq-time" style="color:#E2E8F0;">0 µs</strong></div>
+                                    <div>Par Runtime: <strong id="stat-par-par-time" style="color:#00F0FF;">0 µs</strong></div>
+                                    <div>Matches: <strong id="stat-par-matches" style="color:#00FF9D;">0</strong></div>
+                                </div>
+                            </div>
+
+                            <div style="margin-top:12px;">
+                                <table class="suite-table">
+                                    <thead><tr><th>Worker Thread</th><th>Matches</th><th>Comparisons</th><th>Status</th></tr></thead>
+                                    <tbody id="par-partitions-table-body">
+                                        <tr><td colspan="4" style="color:#64748B;">Ready to spawn worker threads.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Randomized Algorithms Card -->
+                        <div class="glass-card" style="padding:20px; display:flex; flex-direction:column; justify-content:space-between;">
+                            <div>
+                                <div class="card-header-small"><span class="stats-card-title">RANDOMIZED QUICKSORT & QUICKSELECT</span></div>
+                                <p class="card-desc mt-2">Eliminates worst-case O(n²) behavior by choosing pivots uniformly at random.</p>
+
+                                <div class="action-buttons-stack mt-3">
+                                    <button id="btn-run-random-sort" class="btn btn-purple btn-large btn-block">
+                                        <i data-lucide="shuffle" class="btn-icon"></i>
+                                        <span>▶ Run Randomized QuickSort on Corpus Tokens</span>
+                                    </button>
+                                </div>
+
+                                <div class="stats-mini-grid mt-3">
+                                    <div class="stat-box">
+                                        <span class="stat-label">Comparisons</span>
+                                        <span id="random-sort-comps" class="stat-value">0</span>
+                                    </div>
+                                    <div class="stat-box">
+                                        <span class="stat-label">Max Recursion Depth</span>
+                                        <span id="random-sort-depth" class="stat-value">0</span>
+                                    </div>
+                                </div>
+                                <div class="stat-bottom-row mt-2">
+                                    <span class="stat-sublabel">Quicksort Execution Time</span>
+                                    <span id="random-sort-time" class="stat-time-tag">0 µs</span>
+                                </div>
+
+                                <div class="form-group mt-3">
+                                    <label class="form-label">Sorted Output Sample:</label>
+                                    <div id="random-sort-output" class="terminal-preview-box" style="max-height:120px; font-size:0.78rem; color:#A78BFA;">
+                                        Click button above to sort tokens.
+                                    </div>
+                                </div>
+
+                                <hr style="border:none; border-top:1px solid rgba(255,255,255,0.06); margin:18px 0;">
+
+                                <div class="card-header-small"><span class="stats-card-title">RANDOMIZED QUICKSELECT (RANK QUERY)</span></div>
+                                <div style="display:flex; gap:8px; margin-top:10px;">
+                                    <input type="number" id="input-quickselect-k" class="form-input" value="3" min="0" placeholder="Rank k">
+                                    <button id="btn-run-quickselect" class="btn btn-dark-outline btn-block" style="color:#00FF9D; border-color:rgba(0,255,157,0.3);">
+                                        <i data-lucide="target" class="btn-icon"></i>
+                                        <span>Find k-th Element</span>
+                                    </button>
+                                </div>
+                                <div id="quickselect-result" style="font-size:0.8rem; font-family:'JetBrains Mono'; color:#00F0FF; margin-top:10px;">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ------------------------------------------ -->
+                <!-- VIEW 8: PERFORMANCE ANALYSIS & COMPLEXITY -->
+                <!-- ------------------------------------------ -->
+                <section id="view-performance" class="text-suite-view">
+                    <div class="suite-page-header">
+                        <div>
+                            <h2 class="suite-header-title">
+                                <i data-lucide="bar-chart-2"></i>
+                                <span>Performance Analysis & Complexity Matrix</span>
+                            </h2>
+                            <p class="suite-header-subtitle">Theoretical Time & Space Complexity Formal Analysis (BISU Course Syllabus Requirement).</p>
+                        </div>
+                        <button id="btn-run-full-benchmark" class="btn btn-purple btn-glow">
+                            <i data-lucide="play" class="btn-icon"></i>
+                            <span>▶ Run Live Full Benchmark Suite</span>
+                        </button>
+                    </div>
+
+                    <div id="full-benchmark-report" class="hidden mb-4"></div>
+
+                    <!-- Search Filter Box -->
+                    <div class="glass-card mb-3" style="padding:12px 18px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div style="display:flex; align-items:center; gap:8px; width:60%;">
+                                <i data-lucide="search" style="color:#64748B; width:16px; height:16px;"></i>
+                                <input type="text" id="input-filter-complexity" class="form-input" placeholder="Search algorithms by name, category, or notation..." style="border:none; background:transparent;">
+                            </div>
+                            <span class="badge-code badge-cyan">Formal Academic Matrix</span>
+                        </div>
+                    </div>
+
+                    <!-- Complexity Matrix Table -->
+                    <div class="glass-card" style="padding:20px; overflow-x:auto;">
+                        <table class="suite-table">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Algorithm</th>
+                                    <th>Best Case Time</th>
+                                    <th>Average Case Time</th>
+                                    <th>Worst Case Time</th>
+                                    <th>Auxiliary Space</th>
+                                    <th>Theoretical Complexity Analysis</th>
+                                </tr>
+                            </thead>
+                            <tbody id="complexity-matrix-table-body">
+                                <!-- Populated dynamically via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
             </div>
         </main>
     </div>
@@ -638,20 +1232,28 @@ Heuristic: Euclidean Distance
     <div id="modal-about" class="modal-backdrop hidden">
         <div class="modal-card modal-card-lg">
             <div class="modal-header">
-                <h3 class="modal-title">About GraphCrypt v1.0</h3>
+                <h3 class="modal-title">About the Final Project System</h3>
                 <button class="modal-close-btn" data-close-modal="modal-about">&times;</button>
             </div>
             <div class="modal-body modal-scrollable">
-                <h4>Precision Algorithm Engine: Weighted A* & Caesar Cipher</h4>
-                <p>GraphCrypt v1.0 integrates weighted pathfinding with numeric cryptography into a unified end-to-end analytical workflow.</p>
+                <div style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom:12px; margin-bottom:14px;">
+                    <h4 style="color:#00F0FF; margin-bottom:4px;">BOHOL ISLAND STATE UNIVERSITY</h4>
+                    <p style="font-size:0.8rem; color:#94A3B8;">Office of the College of Science and Management · Poblacion Norte, Clarin, Bohol</p>
+                    <p style="font-size:0.75rem; color:#64748B; font-style:italic;">Balance | Integrity | Stewardship | Uprightness</p>
+                </div>
+
+                <h4>Title: Intelligent Text Search, Compression, and Optimization System</h4>
+                <p>This comprehensive algorithmic platform satisfies all requirements of the Course Syllabus (F-AQA-INS-002) alongside the precision GraphCrypt weighted pathfinding and cryptography engine.</p>
                 
-                <h5>Workflow Sequence:</h5>
+                <h5>Required Syllabus Features Implemented:</h5>
                 <ol class="about-list">
-                    <li><strong>Weighted Graph:</strong> Build or edit nodes and weighted edges on the interactive canvas.</li>
-                    <li><strong>A* Pathfinding:</strong> Find the optimal route with heuristic functions: \(f(n) = g(n) + h(n)\).</li>
-                    <li><strong>Shortest Path:</strong> Compute the exact minimal sum of original numerical edge weights.</li>
-                    <li><strong>Encrypt Edge Weights:</strong> Shift edge weights using numeric Modulo-10 Caesar cipher: \((d + \text{shift}) \pmod{10}\).</li>
-                    <li><strong>Generate TXT & Export:</strong> Inspect formatted output and download genuine <code>encrypted_edge_weights.txt</code>.</li>
+                    <li><strong>Text Input / Dataset:</strong> Interactive corpus editor, .txt file upload, and pre-loaded sample datasets (Literature, Genomic DNA, Server logs, Repetitive sequences).</li>
+                    <li><strong>Pattern Matching:</strong> Full implementations of Knuth-Morris-Pratt (KMP), Boyer-Moore, Rabin-Karp, Brute Force, and Approximate (Levenshtein) with live highlight visualizers and comparison telemetry.</li>
+                    <li><strong>Text Compression:</strong> Huffman Coding (with prefix binary tree & codebook), Run-Length Encoding (RLE), and LZW Dictionary Compression with original/compressed sizes, compression ratios, space savings, and lossless verification.</li>
+                    <li><strong>Optimization Feature:</strong> Genetic Algorithm (GA) metaheuristic with generation-by-generation fitness convergence charts, and Combinatorial 0/1 Knapsack (Dynamic Programming exact vs Greedy).</li>
+                    <li><strong>Parallel or Randomized Algorithms:</strong> Multi-threaded parallel pattern search across thread worker pools with speedup telemetry, Randomized QuickSort (random pivot to guarantee expected \(O(n \log n)\)), and Randomized QuickSelect.</li>
+                    <li><strong>Performance Analysis:</strong> Rigorous Big-O Time & Space Complexity matrix with theoretical proofs and live empirical benchmarking.</li>
+                    <li><strong>Graph Precision Engine:</strong> Interactive SVG graph canvas, Weighted A* pathfinding, and Modulo-10 Caesar cipher cryptography.</li>
                 </ol>
             </div>
             <div class="modal-footer">
@@ -667,6 +1269,7 @@ Heuristic: Euclidean Distance
     <script src="{{ url_for('static', filename='js/graph_editor.js') }}"></script>
     <script src="{{ url_for('static', filename='js/astar_ui.js') }}"></script>
     <script src="{{ url_for('static', filename='js/crypto_ui.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/text_suite_ui.js') }}"></script>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 
     <script>

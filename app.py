@@ -13,6 +13,30 @@ from astar import run_astar
 from cipher import get_edge_transformations
 from exporter import generate_concise_txt, generate_full_report_txt, get_txt_bytes_stream
 
+from algorithms import (
+    brute_force_search,
+    kmp_search,
+    boyer_moore_search,
+    rabin_karp_search,
+    approximate_search,
+    compare_all_matchers,
+    huffman_compress,
+    huffman_decompress,
+    rle_compress,
+    rle_decompress,
+    lzw_compress,
+    lzw_decompress,
+    get_compression_stats,
+    run_genetic_algorithm,
+    knapsack_dynamic_programming,
+    knapsack_greedy,
+    parallel_search_text,
+    randomized_quicksort,
+    randomized_quickselect,
+    monte_carlo_sample,
+    get_algorithm_complexity_matrix,
+)
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'graphcrypt-precision-secret-key-v1'
 
@@ -260,5 +284,297 @@ def export_download():
     )
 
 
+# ==========================================
+# INTELLIGENT TEXT SEARCH & DATASET API
+# ==========================================
+
+DATASETS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "datasets")
+
+@app.route("/api/text/samples", methods=["GET"])
+def get_sample_datasets():
+    """Lists available pre-loaded sample datasets."""
+    samples = []
+    if os.path.exists(DATASETS_DIR):
+        for f in os.listdir(DATASETS_DIR):
+            if f.endswith(".txt"):
+                filepath = os.path.join(DATASETS_DIR, f)
+                with open(filepath, "r", encoding="utf-8", errors="ignore") as fp:
+                    content = fp.read()
+                samples.append({
+                    "id": f,
+                    "filename": f,
+                    "title": f.replace("sample_", "").replace(".txt", "").replace("_", " ").title(),
+                    "size_bytes": len(content.encode("utf-8")),
+                    "character_count": len(content),
+                    "preview": content[:120] + ("..." if len(content) > 120 else "")
+                })
+    return jsonify({"success": True, "samples": samples})
+
+
+@app.route("/api/text/load-sample", methods=["POST"])
+def load_sample_dataset():
+    """Loads full content of a requested sample dataset."""
+    data = request.get_json() or {}
+    sample_id = data.get("sample_id", "sample_literature.txt")
+    # Sanitize path to prevent traversal
+    safe_name = os.path.basename(sample_id)
+    filepath = os.path.join(DATASETS_DIR, safe_name)
+
+    if not os.path.exists(filepath):
+        return jsonify({"error": f"Sample dataset '{safe_name}' not found."}), 404
+
+    with open(filepath, "r", encoding="utf-8", errors="ignore") as fp:
+        content = fp.read()
+
+    return jsonify({
+        "success": True,
+        "sample_id": safe_name,
+        "content": content,
+        "size_bytes": len(content.encode("utf-8")),
+        "character_count": len(content)
+    })
+
+
+@app.route("/api/search/pattern", methods=["POST"])
+def search_pattern():
+    """Executes selected string pattern matching algorithm or comparative evaluation."""
+    data = request.get_json() or {}
+    text = data.get("text", "")
+    pattern = data.get("pattern", "")
+    algo = data.get("algorithm", "All")
+    max_distance = int(data.get("max_distance", 1))
+
+    if not text or not pattern:
+        return jsonify({"error": "Both text and pattern are required."}), 400
+
+    if algo == "All":
+        result = compare_all_matchers(text, pattern)
+        return jsonify({"success": True, "mode": "comparison", **result})
+    elif algo == "Brute Force":
+        res = brute_force_search(text, pattern)
+    elif algo == "Knuth-Morris-Pratt (KMP)":
+        res = kmp_search(text, pattern)
+    elif algo == "Boyer-Moore":
+        res = boyer_moore_search(text, pattern)
+    elif algo == "Rabin-Karp":
+        res = rabin_karp_search(text, pattern)
+    elif algo == "Approximate Matching":
+        res = approximate_search(text, pattern, max_distance=max_distance)
+    else:
+        return jsonify({"error": f"Unknown algorithm '{algo}'"}), 400
+
+    return jsonify({"success": True, "mode": "single", "result": res})
+
+
+# ==========================================
+# TEXT COMPRESSION API
+# ==========================================
+
+@app.route("/api/compression/compress", methods=["POST"])
+def compress_text():
+    """Compresses text via Huffman, RLE, or LZW with full telemetry."""
+    data = request.get_json() or {}
+    text = data.get("text", "")
+    method = data.get("method", "Huffman")
+
+    if not text:
+        return jsonify({"error": "Input text cannot be empty."}), 400
+
+    try:
+        stats = get_compression_stats(text, method)
+        return jsonify({"success": True, **stats})
+    except Exception as err:
+        return jsonify({"error": str(err)}), 400
+
+
+@app.route("/api/compression/compare-all", methods=["POST"])
+def compress_compare_all():
+    """Runs Huffman, RLE, and LZW side-by-side on the provided text."""
+    data = request.get_json() or {}
+    text = data.get("text", "")
+
+    if not text:
+        return jsonify({"error": "Input text cannot be empty."}), 400
+
+    results = []
+    for method in ["Huffman", "RLE", "LZW"]:
+        try:
+            stats = get_compression_stats(text, method)
+            results.append(stats)
+        except Exception as err:
+            results.append({"method": method, "error": str(err)})
+
+    return jsonify({"success": True, "comparisons": results})
+
+
+# ==========================================
+# OPTIMIZATION API (GA & KNAPSACK)
+# ==========================================
+
+@app.route("/api/optimization/run", methods=["POST"])
+def run_optimization():
+    """Runs Genetic Algorithm or 0/1 Knapsack optimization."""
+    data = request.get_json() or {}
+    technique = data.get("technique", "GA")
+    capacity = int(data.get("capacity", 50))
+    items = data.get("items")
+
+    if technique == "GA":
+        pop_size = int(data.get("population_size", 40))
+        generations = int(data.get("generations", 50))
+        crossover = float(data.get("crossover_rate", 0.8))
+        mutation = float(data.get("mutation_rate", 0.05))
+
+        res = run_genetic_algorithm(
+            items=items,
+            capacity=capacity,
+            population_size=pop_size,
+            generations=generations,
+            crossover_rate=crossover,
+            mutation_rate=mutation
+        )
+        return jsonify({"success": True, **res})
+
+    elif technique == "Knapsack_DP":
+        if items is None:
+            # Default sample
+            items = [
+                {"id": "DOC-1", "name": "Executive Summary", "weight": 12, "value": 24},
+                {"id": "DOC-2", "name": "System Architecture", "weight": 15, "value": 30},
+                {"id": "DOC-3", "name": "Algorithm Benchmarks", "weight": 8, "value": 18},
+                {"id": "DOC-4", "name": "Security Protocols", "weight": 20, "value": 35},
+                {"id": "DOC-5", "name": "API Documentation", "weight": 10, "value": 22},
+                {"id": "DOC-6", "name": "Error Telemetry", "weight": 6, "value": 14},
+                {"id": "DOC-7", "name": "User Guide Handbook", "weight": 18, "value": 28},
+                {"id": "DOC-8", "name": "Database Schema", "weight": 14, "value": 26},
+            ]
+        dp_res = knapsack_dynamic_programming(items, capacity)
+        greedy_res = knapsack_greedy(items, capacity)
+        return jsonify({
+            "success": True,
+            "dp": dp_res,
+            "greedy": greedy_res
+        })
+
+    return jsonify({"error": f"Unknown optimization technique '{technique}'"}), 400
+
+
+# ==========================================
+# PARALLEL & RANDOMIZED ALGORITHMS API
+# ==========================================
+
+@app.route("/api/parallel/search", methods=["POST"])
+def parallel_search_api():
+    """Runs parallel pattern search across configurable thread workers."""
+    data = request.get_json() or {}
+    text = data.get("text", "")
+    pattern = data.get("pattern", "")
+    workers = int(data.get("workers", 4))
+
+    if not text or not pattern:
+        return jsonify({"error": "Both text and pattern are required."}), 400
+
+    workers = max(1, min(16, workers))
+    result = parallel_search_text(text, pattern, workers=workers)
+    return jsonify({"success": True, **result})
+
+
+@app.route("/api/randomized/quicksort", methods=["POST"])
+def randomized_quicksort_api():
+    """Sorts input list or text lines/tokens using Randomized QuickSort."""
+    data = request.get_json() or {}
+    text = data.get("text", "")
+    items = data.get("items")
+
+    if items is None:
+        if not text:
+            return jsonify({"error": "Either text or items list is required."}), 400
+        # Split text into lines or tokens
+        mode = data.get("split_mode", "words")
+        if mode == "lines":
+            items = [line.strip() for line in text.splitlines() if line.strip()]
+        else:
+            items = [word.strip(".,;:!?()[]\"'") for word in text.split() if word.strip()]
+
+    result = randomized_quicksort(items)
+    return jsonify({"success": True, **result})
+
+
+@app.route("/api/randomized/quickselect", methods=["POST"])
+def randomized_quickselect_api():
+    """Finds k-th smallest element using Randomized QuickSelect."""
+    data = request.get_json() or {}
+    items = data.get("items", [])
+    k = int(data.get("k", 0))
+
+    if not items:
+        return jsonify({"error": "Items list is required."}), 400
+
+    result = randomized_quickselect(items, k)
+    return jsonify({"success": True, **result})
+
+
+@app.route("/api/randomized/monte-carlo", methods=["POST"])
+def monte_carlo_api():
+    """Performs Monte Carlo text sampling."""
+    data = request.get_json() or {}
+    text = data.get("text", "")
+    sample_size = int(data.get("sample_size", 100))
+
+    if not text:
+        return jsonify({"error": "Input text is required."}), 400
+
+    result = monte_carlo_sample(text, sample_size)
+    return jsonify({"success": True, **result})
+
+
+# ==========================================
+# PERFORMANCE ANALYSIS & COMPLEXITY API
+# ==========================================
+
+@app.route("/api/complexity/matrix", methods=["GET"])
+def complexity_matrix_api():
+    """Returns the comprehensive Time & Space Complexity matrix."""
+    return jsonify(get_algorithm_complexity_matrix())
+
+
+@app.route("/api/benchmark/full", methods=["POST"])
+def full_benchmark_api():
+    """Executes an end-to-end multi-algorithm benchmark on the provided text."""
+    data = request.get_json() or {}
+    text = data.get("text", "")
+    pattern = data.get("pattern", "algorithm")
+
+    if not text:
+        # Load sample literature as benchmark corpus
+        filepath = os.path.join(DATASETS_DIR, "sample_literature.txt")
+        if os.path.exists(filepath):
+            with open(filepath, "r", encoding="utf-8") as fp:
+                text = fp.read()
+        else:
+            text = "Bohol Island State University Advanced Algorithms Final Project"
+
+    pattern_comp = compare_all_matchers(text, pattern)
+    
+    comp_results = []
+    for m in ["Huffman", "RLE", "LZW"]:
+        try:
+            comp_results.append(get_compression_stats(text, m))
+        except Exception:
+            pass
+
+    par_res = parallel_search_text(text, pattern, workers=4)
+
+    return jsonify({
+        "success": True,
+        "text_length": len(text),
+        "pattern": pattern,
+        "pattern_matching": pattern_comp,
+        "compression": comp_results,
+        "parallel_speedup": par_res
+    })
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+

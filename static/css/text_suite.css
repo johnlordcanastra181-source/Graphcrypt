@@ -1,0 +1,389 @@
+/* ========================================================
+   Text Suite CSS - Modern Cyber Dark Aesthetic
+   Bohol Island State University (BISU) Final Project
+   Intelligent Text Search, Compression, and Optimization System
+   ======================================================== */
+
+.nav-section-title {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted, #64748B);
+    padding: 12px 18px 4px 18px;
+    margin-top: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.text-suite-view {
+    display: none;
+    padding: 24px 32px;
+    overflow-y: auto;
+    height: 100%;
+}
+
+.text-suite-view.active-view {
+    display: block;
+    animation: fadeInView 0.25s ease-in-out;
+}
+
+@keyframes fadeInView {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Page Header */
+.suite-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.suite-header-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.suite-header-title i {
+    color: #00F0FF;
+}
+
+.suite-header-subtitle {
+    font-size: 0.85rem;
+    color: #94A3B8;
+    margin-top: 4px;
+}
+
+.bisu-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 240, 255, 0.1);
+    border: 1px solid rgba(0, 240, 255, 0.25);
+    color: #00F0FF;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* Split Layouts */
+.suite-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.suite-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 1200px) {
+    .suite-grid-2, .suite-grid-3 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Text Editor & Corpus Box */
+.dataset-editor-box {
+    background: rgba(13, 17, 23, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.editor-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.editor-stats-bar {
+    display: flex;
+    gap: 16px;
+    font-size: 0.78rem;
+    color: #94A3B8;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.editor-stats-bar strong {
+    color: #00F0FF;
+}
+
+.suite-textarea {
+    width: 100%;
+    min-height: 280px;
+    background: #090D16;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    color: #E2E8F0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    padding: 14px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.suite-textarea:focus {
+    border-color: #00F0FF;
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.15);
+}
+
+/* Sample Presets Grid */
+.sample-presets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.sample-preset-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.sample-preset-card:hover {
+    background: rgba(0, 240, 255, 0.05);
+    border-color: rgba(0, 240, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.sample-preset-card.active {
+    background: rgba(112, 89, 254, 0.1);
+    border-color: #7059FE;
+}
+
+.sample-card-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #F8FAFC;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sample-card-desc {
+    font-size: 0.74rem;
+    color: #64748B;
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.sample-card-meta {
+    font-size: 0.70rem;
+    color: #00F0FF;
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: auto;
+}
+
+/* Pattern Match Highlights */
+.match-highlight-container {
+    background: #090D16;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 14px;
+    min-height: 200px;
+    max-height: 380px;
+    overflow-y: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-all;
+    color: #CBD5E1;
+}
+
+.match-hl {
+    background: rgba(0, 240, 255, 0.25);
+    border-bottom: 2px solid #00F0FF;
+    color: #FFFFFF;
+    font-weight: 700;
+    padding: 1px 3px;
+    border-radius: 3px;
+}
+
+.match-hl-fuzzy {
+    background: rgba(255, 122, 0, 0.3);
+    border-bottom: 2px solid #FF7A00;
+    color: #FFFFFF;
+    font-weight: 700;
+    padding: 1px 3px;
+    border-radius: 3px;
+}
+
+/* Comparison Table */
+.suite-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.84rem;
+    margin-top: 12px;
+}
+
+.suite-table th {
+    background: rgba(255, 255, 255, 0.03);
+    color: #94A3B8;
+    text-transform: uppercase;
+    font-size: 0.70rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.suite-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    color: #E2E8F0;
+}
+
+.suite-table tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* Badges */
+.badge-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.badge-green {
+    background: rgba(0, 255, 157, 0.12);
+    color: #00FF9D;
+    border: 1px solid rgba(0, 255, 157, 0.3);
+}
+
+.badge-cyan {
+    background: rgba(0, 240, 255, 0.12);
+    color: #00F0FF;
+    border: 1px solid rgba(0, 240, 255, 0.3);
+}
+
+.badge-purple {
+    background: rgba(112, 89, 254, 0.12);
+    color: #A78BFA;
+    border: 1px solid rgba(112, 89, 254, 0.3);
+}
+
+.badge-orange {
+    background: rgba(255, 122, 0, 0.12);
+    color: #FF7A00;
+    border: 1px solid rgba(255, 122, 0, 0.3);
+}
+
+/* Compression Metrics Box */
+.compression-stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.comp-stat-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.comp-stat-val {
+    font-size: 1.4rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    color: #FFFFFF;
+}
+
+.comp-stat-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    color: #64748B;
+    letter-spacing: 0.05em;
+}
+
+.comp-ratio-bar-wrap {
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 999px;
+    height: 10px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.comp-ratio-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00F0FF, #7059FE);
+    border-radius: 999px;
+    transition: width 0.5s ease-in-out;
+}
+
+/* Canvas Graph Chart */
+.ga-canvas-chart {
+    width: 100%;
+    height: 220px;
+    background: #090D16;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    display: block;
+}
+
+/* Codebook scroll area */
+.codebook-scroll {
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+/* Speedup Gauge */
+.speedup-gauge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 18px;
+    background: rgba(0, 240, 255, 0.03);
+    border: 1px solid rgba(0, 240, 255, 0.15);
+    border-radius: 12px;
+    margin: 12px 0;
+}
+
+.speedup-multiplier {
+    font-size: 2.2rem;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    color: #00F0FF;
+    text-shadow: 0 0 16px rgba(0, 240, 255, 0.4);
+}
+

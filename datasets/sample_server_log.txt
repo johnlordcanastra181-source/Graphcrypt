@@ -1,0 +1,11 @@
+192.168.1.10 - - [19/Oct/2026:08:12:01 +0800] "GET /api/graph HTTP/1.1" 200 8472
+192.168.1.11 - - [19/Oct/2026:08:12:03 +0800] "POST /api/nodes HTTP/1.1" 201 128
+192.168.1.12 - - [19/Oct/2026:08:12:05 +0800] "POST /api/astar/run HTTP/1.1" 200 2450
+192.168.1.10 - - [19/Oct/2026:08:12:09 +0800] "POST /api/cipher/encrypt HTTP/1.1" 200 3120
+192.168.1.14 - - [19/Oct/2026:08:12:15 +0800] "GET /api/export/download HTTP/1.1" 200 489
+192.168.1.15 - - [19/Oct/2026:08:12:22 +0800] "POST /api/search/pattern HTTP/1.1" 200 1560
+192.168.1.16 - - [19/Oct/2026:08:12:30 +0800] "POST /api/compression/run HTTP/1.1" 200 890
+192.168.1.10 - - [19/Oct/2026:08:12:45 +0800] "POST /api/optimization/run HTTP/1.1" 200 3420
+192.168.1.18 - - [19/Oct/2026:08:12:50 +0800] "POST /api/parallel/search HTTP/1.1" 200 1120
+192.168.1.19 - - [19/Oct/2026:08:13:00 +0800] "GET /api/complexity/matrix HTTP/1.1" 200 9540
+
