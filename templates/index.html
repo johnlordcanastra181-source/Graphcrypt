@@ -148,6 +148,14 @@
                 </div>
 
                 <div class="header-tools">
+                    <!-- Multilingual Language Selector (English / Tagalog / Cebuano) -->
+                    <div class="lang-selector-group" id="lang-selector-group" title="Select Explanation Language">
+                        <span class="lang-label-icon"><i data-lucide="globe"></i></span>
+                        <button class="lang-pill active" data-lang="en" title="English (Academic & Technical)">🇺🇸 EN</button>
+                        <button class="lang-pill" data-lang="tl" title="Tagalog (Filipino)">🇵🇭 TL</button>
+                        <button class="lang-pill" data-lang="ceb" title="Cebuano / Bisaya (Boholano)">🏝️ CEB</button>
+                    </div>
+
                     <button id="btn-quick-sample" class="btn-icon-header" title="Reload Sample Graph">
                         <i data-lucide="rotate-ccw"></i>
                     </button>
@@ -760,18 +768,19 @@ Heuristic: Euclidean Distance
                         </div>
                     </div>
 
-                    <!-- Educational Flow Card: Bakit Ganyan ang Result? -->
+                    <!-- Educational Flow Card: Step-by-Step Execution & Why this Result? -->
                     <div id="pattern-flow-card" class="algo-flow-card">
                         <div class="flow-card-header">
                             <span class="flow-card-title">
                                 <i data-lucide="help-circle"></i>
-                                <span>FLOW & BAKIT GANYAN ANG RESULT? (ALGORITHMIC STEP BREAKDOWN)</span>
+                                <span>HOW IT WORKS & WHY THIS RESULT? (PATTERN MATCHING FLOW)</span>
+                                <span class="flow-card-lang-indicator" data-lang-badge>🇺🇸 English</span>
                             </span>
-                            <span class="badge-code badge-cyan">Step-by-Step Educational Flow</span>
+                            <span class="badge-code badge-cyan">Step-by-Step Educational Telemetry</span>
                         </div>
                         <div id="pattern-flow-content">
                             <div class="flow-summary-banner">
-                                Piliin ang alinmang algorithm sa itaas at pindutin ang "Search" upang makita ang buong step-by-step breakdown kung paano at bakit nito nakuha ang nasabing output.
+                                Select any algorithm above and click "Search" to view the complete step-by-step breakdown of how and why the output was produced.
                             </div>
                         </div>
                     </div>
@@ -878,18 +887,19 @@ Heuristic: Euclidean Distance
                         </div>
                     </div>
 
-                    <!-- Educational Flow Card: Bakit Ganyan ang Result? -->
+                    <!-- Educational Flow Card: Step-by-Step Execution & Why this Result? -->
                     <div id="compression-flow-card" class="algo-flow-card">
                         <div class="flow-card-header">
                             <span class="flow-card-title">
                                 <i data-lucide="help-circle"></i>
-                                <span>FLOW & BAKIT GANYAN ANG RESULT? (COMPRESSION MECHANICS)</span>
+                                <span>HOW IT WORKS & WHY THIS RESULT? (COMPRESSION & LOSSLESS FLOW)</span>
+                                <span class="flow-card-lang-indicator" data-lang-badge>🇺🇸 English</span>
                             </span>
                             <span class="badge-code badge-green">Lossless Integrity Breakdown</span>
                         </div>
                         <div id="compression-flow-content">
                             <div class="flow-summary-banner">
-                                Pindutin ang "▶ Compress Text" o "⚡ Compare All 3 Methods" upang makita ang buong paliwanag kung bakit lumiliit ang file, paano nabuo ang prefix codebook o diksyunaryo, at bakit 100% lossless ang decompression.
+                                Click "▶ Compress Text" or "⚡ Compare All 3 Methods" to see why file sizes change, how codebooks/dictionaries are structured, and why decompression is 100% lossless.
                             </div>
                         </div>
                     </div>
@@ -1003,18 +1013,19 @@ Heuristic: Euclidean Distance
                         </div>
                     </div>
 
-                    <!-- Educational Flow Card: Bakit Ganyan ang Result? -->
+                    <!-- Educational Flow Card: Step-by-Step Execution & Why this Result? -->
                     <div id="optimization-flow-card" class="algo-flow-card">
                         <div class="flow-card-header">
                             <span class="flow-card-title">
                                 <i data-lucide="help-circle"></i>
-                                <span>FLOW & BAKIT GANYAN ANG RESULT? (EVOLUTION & SUBPROBLEM MEMOIZATION)</span>
+                                <span>HOW IT WORKS & WHY THIS RESULT? (EVOLUTION & MEMOIZATION FLOW)</span>
+                                <span class="flow-card-lang-indicator" data-lang-badge>🇺🇸 English</span>
                             </span>
                             <span class="badge-code badge-purple">Metaheuristic & DP Analysis</span>
                         </div>
                         <div id="optimization-flow-content">
                             <div class="flow-summary-banner">
-                                Pindutin ang "▶ Run Genetic Algorithm" o "Compare DP vs Greedy" upang makita ang buong paliwanag kung paano nag-evolve ang fitness score bawat henerasyon at bakit guaranteed global optimum ang Dynamic Programming table.
+                                Click "▶ Run Genetic Algorithm" or "Compare DP vs Greedy" to see how fitness scores evolve across generations and why Dynamic Programming guarantees global optimality.
                             </div>
                         </div>
                     </div>
@@ -1141,18 +1152,19 @@ Heuristic: Euclidean Distance
                         </div>
                     </div>
 
-                    <!-- Educational Flow Card: Bakit Ganyan ang Result? -->
+                    <!-- Educational Flow Card: Step-by-Step Execution & Why this Result? -->
                     <div id="parallel-flow-card" class="algo-flow-card">
                         <div class="flow-card-header">
                             <span class="flow-card-title">
                                 <i data-lucide="help-circle"></i>
-                                <span>FLOW & BAKIT GANYAN ANG RESULT? (CONCURRENCY & RANDOMIZED PIVOTS)</span>
+                                <span>HOW IT WORKS & WHY THIS RESULT? (CONCURRENCY & RANDOM PIVOT FLOW)</span>
+                                <span class="flow-card-lang-indicator" data-lang-badge>🇺🇸 English</span>
                             </span>
                             <span class="badge-code badge-orange">Multi-Threading & Lomuto Partitioning</span>
                         </div>
                         <div id="parallel-flow-content">
                             <div class="flow-summary-banner">
-                                Pindutin ang "▶ Execute Parallel Search" o "▶ Run Randomized QuickSort" upang makita kung paano gumana ang boundary overlap margins sa thread chunks at bakit napigilan ng uniform random pivots ang O(n²) worst-case slowdown.
+                                Click "▶ Execute Parallel Search" or "▶ Run Randomized QuickSort" to see how thread chunks handle boundary overlaps and how uniform random pivots prevent O(n²) worst-case slowdowns.
                             </div>
                         </div>
                     </div>
@@ -1327,6 +1339,7 @@ Heuristic: Euclidean Distance
     <div id="toast-container" class="toast-stack"></div>
 
     <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/i18n_explanations.js') }}"></script>
     <script src="{{ url_for('static', filename='js/graph_editor.js') }}"></script>
     <script src="{{ url_for('static', filename='js/astar_ui.js') }}"></script>
     <script src="{{ url_for('static', filename='js/crypto_ui.js') }}"></script>

@@ -529,4 +529,74 @@
     font-weight: 700;
 }
 
+/* ========================================================
+   Multilingual Language Switcher (EN / TL / CEB)
+   ======================================================== */
+.lang-selector-group {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(13, 19, 34, 0.85);
+    border: 1px solid rgba(0, 240, 255, 0.25);
+    border-radius: 999px;
+    padding: 3px 6px;
+    gap: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.lang-label-icon {
+    display: flex;
+    align-items: center;
+    color: #00F0FF;
+    font-size: 0.8rem;
+    margin-left: 4px;
+    margin-right: 2px;
+}
+
+.lang-label-icon svg {
+    width: 14px;
+    height: 14px;
+}
+
+.lang-pill {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #94A3B8;
+    font-size: 0.74rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: inherit;
+    line-height: 1.2;
+}
+
+.lang-pill:hover {
+    color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.lang-pill.active {
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(112, 89, 254, 0.35));
+    color: #00F0FF;
+    border-color: rgba(0, 240, 255, 0.55);
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+    font-weight: 700;
+}
+
+.flow-card-lang-indicator {
+    font-size: 0.72rem;
+    color: #A78BFA;
+    background: rgba(112, 89, 254, 0.15);
+    border: 1px solid rgba(112, 89, 254, 0.3);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+
 

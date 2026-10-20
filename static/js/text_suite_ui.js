@@ -8,10 +8,22 @@ class TextSuiteController {
     constructor() {
         this.currentCorpus = "It was the best of times, it was the worst of times, it was the age of wisdom, it was the age of foolishness, it was the epoch of belief, it was the epoch of incredulity, it was the season of light, it was the season of darkness, it was the spring of hope, it was the winter of despair. We had everything before us, we had nothing before us, we were all going direct to heaven, we were all going direct the other way.\n\nIn computational science, algorithms represent systematic sequences of unambiguous instructions designed to perform specific calculations, data processing, and automated reasoning tasks. Pattern matching algorithms such as Knuth-Morris-Pratt and Boyer-Moore optimize information retrieval across vast text repositories. Data compression algorithms such as Huffman coding and LZW maximize channel throughput and minimize storage footprints. Through algorithmic optimization and parallel computing, modern information systems achieve scalable efficiency across distributed computational architectures.";
         this.samples = [];
+        this.currentLang = window.getCurrentLanguage ? window.getCurrentLanguage() : 'en';
+        this.lastResults = {
+            pattern: null,
+            compression: null,
+            compressionComparison: null,
+            ga: null,
+            knapsack: null,
+            parallelSearch: null,
+            randomSort: null,
+            quickSelect: null
+        };
         this.init();
     }
 
     init() {
+        this.bindLanguageSwitcher();
         this.bindDatasetEvents();
         this.bindPatternEvents();
         this.bindCompressionEvents();
@@ -21,6 +33,121 @@ class TextSuiteController {
         this.fetchSampleDatasets();
         this.fetchComplexityMatrix();
         this.updateCorpusText(this.currentCorpus);
+        this.updateLanguageBadges(this.currentLang);
+        this.updatePlaceholderFlows(this.currentLang);
+    }
+
+    // ==========================================
+    // MULTILINGUAL (I18N) SWITCHER & HELPERS
+    // ==========================================
+    bindLanguageSwitcher() {
+        document.querySelectorAll('.lang-pill').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const lang = btn.dataset.lang;
+                if (lang && window.setLanguage) {
+                    window.setLanguage(lang);
+                }
+            });
+        });
+
+        window.addEventListener('languageChanged', (e) => {
+            const lang = e.detail?.lang || 'en';
+            this.onLanguageChanged(lang);
+        });
+    }
+
+    onLanguageChanged(lang) {
+        this.currentLang = lang;
+        this.updateLanguageBadges(lang);
+        this.updatePlaceholderFlows(lang);
+
+        // Instant re-render of active results with zero network roundtrips
+        if (this.lastResults.pattern) {
+            const { data, text, pattern } = this.lastResults.pattern;
+            this.renderPatternResults(data, text, pattern);
+        }
+        if (this.lastResults.compression) {
+            this.renderCompressionStats(this.lastResults.compression);
+        }
+        if (this.lastResults.compressionComparison) {
+            this.renderCompressionComparisonFlow(this.lastResults.compressionComparison);
+        }
+        if (this.lastResults.ga) {
+            this.renderGAResults(this.lastResults.ga);
+        }
+        if (this.lastResults.knapsack) {
+            this.renderKnapsackFlow(this.lastResults.knapsack);
+        }
+        if (this.lastResults.parallelSearch) {
+            this.renderParallelSearchFlow(this.lastResults.parallelSearch);
+        }
+        if (this.lastResults.randomSort) {
+            this.renderRandomSortFlow(this.lastResults.randomSort);
+        }
+        if (this.lastResults.quickSelect) {
+            this.renderQuickSelectFlow(this.lastResults.quickSelect);
+        }
+
+        const langName = (window.I18N_LANGUAGES || []).find(l => l.code === lang)?.name || lang;
+        window.showToast?.(`Explanations switched to ${langName}.`, 'info');
+    }
+
+    updateLanguageBadges(lang) {
+        const langObj = (window.I18N_LANGUAGES || []).find(l => l.code === lang) || { flag: '🇺🇸', name: 'English' };
+        const badgeText = `${langObj.flag} ${langObj.name}`;
+        document.querySelectorAll('.flow-card-lang-indicator').forEach(el => {
+            el.textContent = badgeText;
+        });
+
+        document.querySelectorAll('.lang-pill').forEach(btn => {
+            if (btn.dataset.lang === lang) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    updatePlaceholderFlows(lang) {
+        const placeholders = {
+            en: {
+                pattern: 'Select any algorithm above and click "Search" to view the complete step-by-step breakdown of how and why the output was produced.',
+                compression: 'Click "▶ Compress Text" or "⚡ Compare All 3 Methods" to see why file sizes change, how codebooks/dictionaries are structured, and why decompression is 100% lossless.',
+                optimization: 'Click "▶ Run Genetic Algorithm" or "Compare DP vs Greedy" to see how fitness scores evolve across generations and why Dynamic Programming guarantees global optimality.',
+                parallel: 'Click "▶ Execute Parallel Search" or "▶ Run Randomized QuickSort" to see how thread chunks handle boundary overlaps and how uniform random pivots prevent O(n²) worst-case slowdowns.'
+            },
+            tl: {
+                pattern: 'Piliin ang alinmang algorithm sa itaas at pindutin ang "Search" upang makita ang buong step-by-step breakdown kung paano at bakit nito nakuha ang nasabing output.',
+                compression: 'Pindutin ang "▶ Compress Text" o "⚡ Compare All 3 Methods" upang makita ang buong paliwanag kung bakit lumiliit ang file, paano nabuo ang prefix codebook o diksyunaryo, at bakit 100% lossless ang decompression.',
+                optimization: 'Pindutin ang "▶ Run Genetic Algorithm" o "Compare DP vs Greedy" upang makita ang buong paliwanag kung paano nag-evolve ang fitness score bawat henerasyon at bakit guaranteed global optimum ang Dynamic Programming table.',
+                parallel: 'Pindutin ang "▶ Execute Parallel Search" o "▶ Run Randomized QuickSort" upang makita kung paano gumana ang boundary overlap margins sa thread chunks at bakit napigilan ng uniform random pivots ang O(n²) worst-case slowdown.'
+            },
+            ceb: {
+                pattern: 'Pilia ang bisan unsa nga algorithm sa ibabaw ug pindota ang "Search" aron makita ang tibuok lakang-sa-lakang nga katin-awan kon giunsa ug ngano nga nakuha ang maong resulta.',
+                compression: 'Pindota ang "▶ Compress Text" o "⚡ Compare All 3 Methods" aron makita kon ngano nimenos ang gidak-on sa file, giunsa paghimo ang codebook/diksyunaryo, ug ngano nga 100% lossless ang decompression.',
+                optimization: 'Pindota ang "▶ Run Genetic Algorithm" o "Compare DP vs Greedy" aron makita kon giunsa pag-uswag ang fitness score sa matag henerasyon ug ngano nga garantisadong global optimum ang Dynamic Programming.',
+                parallel: 'Pindota ang "▶ Execute Parallel Search" o "▶ Run Randomized QuickSort" aron makita kon giunsa paglihok sa boundary overlap margin sa mga tipak ug ngano nga ang random pivots nakapugong sa O(n²) worst-case nga paghinay.'
+            }
+        };
+
+        const ph = placeholders[lang] || placeholders.en;
+        if (!this.lastResults.pattern) {
+            const el = document.getElementById('pattern-flow-content');
+            if (el) el.innerHTML = `<div class="flow-summary-banner">${ph.pattern}</div>`;
+        }
+        if (!this.lastResults.compression && !this.lastResults.compressionComparison) {
+            const el = document.getElementById('compression-flow-content');
+            if (el) el.innerHTML = `<div class="flow-summary-banner">${ph.compression}</div>`;
+        }
+        if (!this.lastResults.ga && !this.lastResults.knapsack) {
+            const el = document.getElementById('optimization-flow-content');
+            if (el) el.innerHTML = `<div class="flow-summary-banner">${ph.optimization}</div>`;
+        }
+        if (!this.lastResults.parallelSearch && !this.lastResults.randomSort && !this.lastResults.quickSelect) {
+            const el = document.getElementById('parallel-flow-content');
+            if (el) el.innerHTML = `<div class="flow-summary-banner">${ph.parallel}</div>`;
+        }
     }
 
     // ==========================================
@@ -218,10 +345,16 @@ class TextSuiteController {
     }
 
     renderPatternResults(data, text, pattern) {
+        this.lastResults.pattern = { data, text, pattern };
+
         const summaryBox = document.getElementById('pattern-results-summary');
         const highlightBox = document.getElementById('pattern-highlight-viewer');
         const compTable = document.getElementById('pattern-comparison-table-body');
         const flowContainer = document.getElementById('pattern-flow-content');
+
+        const lang = this.currentLang || 'en';
+        const i18n = window.I18N_EXPLANATIONS ? (window.I18N_EXPLANATIONS[lang] || window.I18N_EXPLANATIONS.en) : null;
+        const ui = window.I18N_UI ? (window.I18N_UI[lang] || window.I18N_UI.en) : null;
 
         let matchIndices = [];
         let matchCount = 0;
@@ -236,7 +369,7 @@ class TextSuiteController {
                 compTable.innerHTML = data.results.map(r => `
                     <tr>
                         <td><strong>${r.algorithm}</strong></td>
-                        <td><span class="badge-code badge-cyan">${r.match_count} matches</span></td>
+                        <td><span class="badge-code badge-cyan">${r.match_count} ${ui?.matches_found || 'matches'}</span></td>
                         <td><span class="badge-code badge-purple">${r.comparisons.toLocaleString()}</span></td>
                         <td><span class="badge-code badge-green">${r.time_microseconds.toFixed(1)} µs</span></td>
                         <td style="font-size:0.75rem; color:#94A3B8;">${r.details || '-'}</td>
@@ -246,47 +379,70 @@ class TextSuiteController {
             document.getElementById('pattern-comparison-card')?.classList.remove('hidden');
 
             // Render Comparison Educational Flow
-            if (flowContainer) {
+            if (flowContainer && i18n) {
                 const kmpRes = data.results.find(r => r.algorithm.includes('KMP'));
                 const bmRes = data.results.find(r => r.algorithm.includes('Boyer'));
                 const bfRes = data.results.find(r => r.algorithm.includes('Brute'));
                 const rkRes = data.results.find(r => r.algorithm.includes('Rabin'));
 
+                const summaryText = window.formatI18nText(i18n.pattern_comparison_summary, {
+                    kmp_comps: kmpRes?.comparisons || 0,
+                    bm_comps: bmRes?.comparisons || 0,
+                    bf_comps: bfRes?.comparisons || 0,
+                    rk_comps: rkRes?.comparisons || 0
+                });
+
                 flowContainer.innerHTML = `
                     <div class="flow-summary-banner">
-                        <strong>Buod ng Pagsusuri:</strong> Ang KMP (${kmpRes?.comparisons || 0} comparisons) at Boyer-Moore (${bmRes?.comparisons || 0} comparisons) ay naging mas mabilis kaysa Brute Force (${bfRes?.comparisons || 0} comparisons) dahil gumagamit sila ng precomputed heuristics upang maiwasan ang muling pagsusuri sa mga karakter na tugma na.
+                        <strong>${ui?.summary_title || 'Summary'}:</strong> ${summaryText}
                     </div>
 
                     <div class="flow-step-list">
+                        <!-- KMP -->
                         <div class="flow-step-item">
                             <span class="flow-step-num">KMP</span>
                             <div class="flow-step-content">
-                                <strong>Knuth-Morris-Pratt (LPS Array):</strong>
-                                <p style="margin:4px 0;">Binuo ang Longest Proper Prefix which is Suffix table para sa pattern <code>"${pattern}"</code>: <code>[${(kmpRes?.lps_table || []).join(', ')}]</code>. Tuwing may mismatch, hindi bumabalik ang pointer ng text kundi lumalaktaw batay sa LPS array, kaya nananatiling strictly linear $O(n + m)$.</p>
+                                <strong>${i18n.kmp.title}</strong>
+                                <p style="margin:4px 0;">${window.formatI18nText(i18n.kmp.why, { match_count: kmpRes?.match_count || 0, comparisons: kmpRes?.comparisons || 0 })}</p>
+                                <div style="font-size:0.78rem; color:#94A3B8; margin-top:4px;">
+                                    ${i18n.kmp.steps.map(s => `<div>• ${window.formatI18nText(s, { pattern: pattern, lps: (kmpRes?.lps_table || []).join(', ') })}</div>`).join('')}
+                                </div>
                             </div>
                         </div>
 
+                        <!-- Boyer-Moore -->
                         <div class="flow-step-item">
                             <span class="flow-step-num">BM</span>
                             <div class="flow-step-content">
-                                <strong>Boyer-Moore (Bad Character Shift):</strong>
-                                <p style="margin:4px 0;">Nagsusuri mula kanan pakaliwa. Kapag may mismatched character, tinitingnan ang huling posisyon nito sa pattern. Kung wala ito, nilalaktawan agad ang buong $m=${pattern.length}$ characters sa isang hakbang lang (sublinear speedup $\\Omega(n/m)$).</p>
+                                <strong>${i18n.boyer_moore.title}</strong>
+                                <p style="margin:4px 0;">${window.formatI18nText(i18n.boyer_moore.why, { match_count: bmRes?.match_count || 0, comparisons: bmRes?.comparisons || 0, pattern_len: pattern.length })}</p>
+                                <div style="font-size:0.78rem; color:#94A3B8; margin-top:4px;">
+                                    ${i18n.boyer_moore.steps.map(s => `<div>• ${window.formatI18nText(s, { pattern: pattern, pattern_len: pattern.length })}</div>`).join('')}
+                                </div>
                             </div>
                         </div>
 
+                        <!-- Rabin-Karp -->
                         <div class="flow-step-item">
                             <span class="flow-step-num">RK</span>
                             <div class="flow-step-content">
-                                <strong>Rabin-Karp (Rolling Polynomial Hash):</strong>
-                                <p style="margin:4px 0;">Kinukwenta ang pattern hash (${rkRes?.pattern_hash || '-'}). Ang pag-usad sa bawat text window ay $O(1)$ arithmetic operations gamit ang rolling hash formula. Nasuri nang mabilis at nakapagtala lamang ng ${rkRes?.spurious_hits || 0} spurious collision(s).</p>
+                                <strong>${i18n.rabin_karp.title}</strong>
+                                <p style="margin:4px 0;">${window.formatI18nText(i18n.rabin_karp.why, { match_count: rkRes?.match_count || 0, comparisons: rkRes?.comparisons || 0, spurious_hits: rkRes?.spurious_hits || 0 })}</p>
+                                <div style="font-size:0.78rem; color:#94A3B8; margin-top:4px;">
+                                    ${i18n.rabin_karp.steps.map(s => `<div>• ${window.formatI18nText(s, { pattern: pattern, pattern_hash: rkRes?.pattern_hash || '-' })}</div>`).join('')}
+                                </div>
                             </div>
                         </div>
 
+                        <!-- Brute Force -->
                         <div class="flow-step-item">
                             <span class="flow-step-num">BF</span>
                             <div class="flow-step-content">
-                                <strong>Brute Force Baseline:</strong>
-                                <p style="margin:4px 0;">Walang precomputation ($O(1)$ space). Inihambing ang bawat karakter isa-isa, kaya umabot sa pinakamataas na ${bfRes?.comparisons || 0} comparisons.</p>
+                                <strong>${i18n.brute_force.title}</strong>
+                                <p style="margin:4px 0;">${window.formatI18nText(i18n.brute_force.why, { match_count: bfRes?.match_count || 0, comparisons: bfRes?.comparisons || 0 })}</p>
+                                <div style="font-size:0.78rem; color:#94A3B8; margin-top:4px;">
+                                    ${i18n.brute_force.steps.map(s => `<div>• ${s}</div>`).join('')}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -304,7 +460,7 @@ class TextSuiteController {
                 compTable.innerHTML = `
                     <tr>
                         <td><strong>${r.algorithm}</strong></td>
-                        <td><span class="badge-code badge-cyan">${matchCount} matches</span></td>
+                        <td><span class="badge-code badge-cyan">${matchCount} ${ui?.matches_found || 'matches'}</span></td>
                         <td><span class="badge-code badge-purple">${comparisons.toLocaleString()}</span></td>
                         <td><span class="badge-code badge-green">${timeUs.toFixed(1)} µs</span></td>
                         <td style="font-size:0.75rem; color:#94A3B8;">${r.details || '-'}</td>
@@ -314,7 +470,25 @@ class TextSuiteController {
             document.getElementById('pattern-comparison-card')?.classList.remove('hidden');
 
             // Render Single Algorithm Flow
-            if (flowContainer) {
+            if (flowContainer && i18n) {
+                let algoKey = 'kmp';
+                if (r.algorithm.includes('Boyer')) algoKey = 'boyer_moore';
+                else if (r.algorithm.includes('Rabin')) algoKey = 'rabin_karp';
+                else if (r.algorithm.includes('Brute')) algoKey = 'brute_force';
+                else if (r.algorithm.includes('Approximate')) algoKey = 'approximate';
+
+                const entry = i18n[algoKey] || i18n.kmp;
+                const whyText = window.formatI18nText(entry.why, {
+                    match_count: matchCount,
+                    comparisons: comparisons,
+                    pattern: pattern,
+                    pattern_len: pattern.length,
+                    lps: (r.lps_table || []).join(', '),
+                    pattern_hash: r.pattern_hash || '-',
+                    spurious_hits: r.spurious_hits || 0,
+                    max_distance: r.max_distance || 2
+                });
+
                 let extraHtml = '';
                 if (r.lps_breakdown && r.lps_breakdown.length > 0) {
                     extraHtml = `
@@ -337,20 +511,32 @@ class TextSuiteController {
                     `;
                 }
 
-                flowContainer.innerHTML = `
-                    <div class="flow-summary-banner">
-                        <strong>Bakit Ganyan ang Result?</strong> ${r.why_result || r.details}
-                    </div>
-                    <div class="flow-step-list">
+                const stepsHtml = entry.steps.map((st, idx) => {
+                    const formattedStep = window.formatI18nText(st, {
+                        pattern: pattern,
+                        pattern_len: pattern.length,
+                        lps: (r.lps_table || []).join(', '),
+                        pattern_hash: r.pattern_hash || '-',
+                        max_distance: r.max_distance || 2
+                    });
+                    return `
                         <div class="flow-step-item">
-                            <span class="flow-step-num">Flow</span>
+                            <span class="flow-step-num">${ui?.step_lbl || 'Step'} ${idx + 1}</span>
                             <div class="flow-step-content">
-                                <strong>Hakbang ng Algoritmo:</strong>
-                                <p style="margin:4px 0;">${r.flow_explanation || '-'}</p>
-                                ${extraHtml}
+                                <p style="margin:0;">${formattedStep}</p>
                             </div>
                         </div>
+                    `;
+                }).join('');
+
+                flowContainer.innerHTML = `
+                    <div class="flow-summary-banner">
+                        <strong>${ui?.why_result_title || 'Why this Result?'}:</strong> ${whyText}
                     </div>
+                    <div class="flow-step-list">
+                        ${stepsHtml}
+                    </div>
+                    ${extraHtml}
                 `;
             }
         }
@@ -468,20 +654,9 @@ class TextSuiteController {
             }
             document.getElementById('comp-compare-all-card')?.classList.remove('hidden');
 
-            // Render Comparison Flow
-            const flowContainer = document.getElementById('compression-flow-content');
-            if (flowContainer) {
-                flowContainer.innerHTML = `
-                    <div class="flow-summary-banner">
-                        <strong>Paghahambing ng mga Paraan ng Compression:</strong>
-                        <ul style="margin:6px 0 0 18px; line-height:1.6;">
-                            <li><strong>Huffman Coding:</strong> Pinakaangkop sa natural na wika dahil binibigyan ng maikling bitcode ang mga madalas lumitaw na karakter (malapit sa Shannon Entropy).</li>
-                            <li><strong>Run-Length Encoding (RLE):</strong> Pinakamahusay kung may paulit-ulit na magkakatabing karakter (hal. AAAAA). Ngunit kung halo-halo ang mga titik, lumalaki ang file dahil ang bawat karakter ay nagiging [bilang][karakter].</li>
-                            <li><strong>LZW Dictionary:</strong> Mabilis at epektibo sa structured text o paulit-ulit na mga parirala dahil awtomatiko itong natututo ng bagong mga salita sa diksyunaryo.</li>
-                        </ul>
-                    </div>
-                `;
-            }
+            this.lastResults.compressionComparison = data;
+            this.lastResults.compression = null; // clear single mode
+            this.renderCompressionComparisonFlow(data);
 
             window.showToast('Generated multi-method compression comparison.', 'success');
         } catch (err) {
@@ -489,7 +664,31 @@ class TextSuiteController {
         }
     }
 
+    renderCompressionComparisonFlow(data) {
+        const flowContainer = document.getElementById('compression-flow-content');
+        if (!flowContainer) return;
+
+        const lang = this.currentLang || 'en';
+        const i18n = window.I18N_EXPLANATIONS ? (window.I18N_EXPLANATIONS[lang] || window.I18N_EXPLANATIONS.en) : null;
+        const ui = window.I18N_UI ? (window.I18N_UI[lang] || window.I18N_UI.en) : null;
+
+        if (i18n && i18n.compression_compare_summary) {
+            flowContainer.innerHTML = `
+                <div class="flow-summary-banner" style="white-space:pre-line; line-height: 1.6;">
+                    <strong>${ui?.summary_title || 'Summary'}:</strong>\n${i18n.compression_compare_summary}
+                </div>
+            `;
+        }
+    }
+
     renderCompressionStats(data) {
+        this.lastResults.compression = data;
+        this.lastResults.compressionComparison = null; // clear comparison mode
+
+        const lang = this.currentLang || 'en';
+        const i18n = window.I18N_EXPLANATIONS ? (window.I18N_EXPLANATIONS[lang] || window.I18N_EXPLANATIONS.en) : null;
+        const ui = window.I18N_UI ? (window.I18N_UI[lang] || window.I18N_UI.en) : null;
+
         document.getElementById('comp-stat-orig-size').textContent = `${data.original_bytes?.toLocaleString()} B`;
         document.getElementById('comp-stat-comp-size').textContent = `${data.compressed_bytes?.toLocaleString()} B`;
         document.getElementById('comp-stat-ratio').textContent = `${data.compression_ratio}%`;
@@ -512,7 +711,7 @@ class TextSuiteController {
         if (detailsContainer) {
             if (data.method === 'Huffman' && data.codebook) {
                 detailsContainer.innerHTML = `
-                    <div style="font-size:0.8rem; margin-bottom:8px; color:#94A3B8;">Huffman Codebook Dictionary (${data.codebook.length} unique prefix symbols):</div>
+                    <div style="font-size:0.8rem; margin-bottom:8px; color:#94A3B8;">${ui?.codebook_lbl || 'Huffman Codebook'} (${data.codebook.length} unique prefix symbols):</div>
                     <div class="codebook-scroll">
                         <table class="suite-table">
                             <thead><tr><th>Character</th><th>Frequency</th><th>Prefix Bitcode</th><th>Bits</th><th>Bit Savings</th></tr></thead>
@@ -530,18 +729,18 @@ class TextSuiteController {
                         </table>
                     </div>
                     <div class="form-group mt-3">
-                        <label class="form-label">Bitstream Stream (Unang 300 bits):</label>
+                        <label class="form-label">Bitstream Stream (First 300 bits):</label>
                         <div class="terminal-preview-box" style="word-break:break-all; font-size:0.78rem; color:#00F0FF;">${data.encoded_bits}</div>
                     </div>
                 `;
             } else if (data.method === 'Run-Length Encoding (RLE)') {
                 detailsContainer.innerHTML = `
-                    <div style="font-size:0.8rem; margin-bottom:8px; color:#94A3B8;">Encoded RLE Stream (${data.runs_count} run segments | Longest run: ${data.longest_run}):</div>
+                    <div style="font-size:0.8rem; margin-bottom:8px; color:#94A3B8;">Encoded RLE Stream (${data.runs_count} ${ui?.runs_lbl || 'run segments'} | Longest run: ${data.longest_run}):</div>
                     <div class="terminal-preview-box" style="max-height:180px; overflow-y:auto; word-break:break-all; font-size:0.82rem; color:#00FF9D;">${data.encoded_text}</div>
                 `;
             } else if (data.method === 'LZW Dictionary Compression') {
                 detailsContainer.innerHTML = `
-                    <div style="font-size:0.8rem; margin-bottom:8px; color:#94A3B8;">LZW Dynamic Dictionary (${data.dictionary_size} total dictionary entries | ${data.code_bit_width}-bit codes):</div>
+                    <div style="font-size:0.8rem; margin-bottom:8px; color:#94A3B8;">LZW ${ui?.dictionary_lbl || 'Dynamic Dictionary'} (${data.dictionary_size} total dictionary entries | ${data.code_bit_width}-bit codes):</div>
                     <div class="codebook-scroll">
                         <table class="suite-table">
                             <thead><tr><th>Step</th><th>Current (W)</th><th>Next (K)</th><th>New Entry (W+K)</th><th>Assigned Code</th><th>Emitted</th></tr></thead>
@@ -569,25 +768,47 @@ class TextSuiteController {
 
         // Render Educational Flow Breakdown
         const flowContainer = document.getElementById('compression-flow-content');
-        if (flowContainer) {
-            flowContainer.innerHTML = `
-                <div class="flow-summary-banner">
-                    <strong>Bakit Ganyan ang Result?</strong> ${data.why_result || data.details}
-                </div>
-                <div class="flow-step-list">
+        if (flowContainer && i18n) {
+            let compKey = 'huffman';
+            if (data.method.includes('Run-Length')) compKey = 'rle';
+            else if (data.method.includes('LZW')) compKey = 'lzw';
+
+            const cEntry = i18n[compKey] || i18n.huffman;
+            const whyText = window.formatI18nText(cEntry.why, {
+                orig_bytes: data.original_bytes?.toLocaleString(),
+                comp_bytes: data.compressed_bytes?.toLocaleString(),
+                compression_ratio: data.compression_ratio,
+                space_savings: data.space_savings,
+                symbol_count: data.codebook ? data.codebook.length : 0,
+                runs_count: data.runs_count || 0,
+                longest_run: data.longest_run || 0,
+                dictionary_size: data.dictionary_size || 0,
+                codes_count: data.codes ? data.codes.length : 0,
+                bit_width: data.code_bit_width || 12
+            });
+
+            const stepsHtml = cEntry.steps.map((st, idx) => {
+                return `
                     <div class="flow-step-item">
-                        <span class="flow-step-num">Proseso</span>
+                        <span class="flow-step-num">${ui?.step_lbl || 'Step'} ${idx + 1}</span>
                         <div class="flow-step-content">
-                            <strong>Hakbang ng Compression Engine:</strong>
-                            <p style="margin:4px 0; white-space:pre-line;">${data.flow_explanation || '-'}</p>
+                            <p style="margin:0;">${st}</p>
                         </div>
                     </div>
+                `;
+            }).join('');
+
+            flowContainer.innerHTML = `
+                <div class="flow-summary-banner">
+                    <strong>${ui?.why_result_title || 'Why this Result?'}:</strong> ${whyText}
+                </div>
+                <div class="flow-step-list">
+                    ${stepsHtml}
                     <div class="flow-step-item">
-                        <span class="flow-step-num">Lossless</span>
+                        <span class="flow-step-num">${ui?.lossless_title || 'Lossless Verification'}</span>
                         <div class="flow-step-content">
-                            <strong>100% Round-trip Decompression Verification:</strong>
-                            <p style="margin:4px 0;">${data.lossless_explanation || 'Napatunayang tugma ang bawat byte.'}</p>
-                            <p style="margin:4px 0; font-size:0.75rem; color:#94A3B8;">Decompressed Sample: <code>"${this.escapeHtml(data.decompressed_preview || '')}"</code></p>
+                            <p style="margin:0;"><strong>${data.is_lossless ? '✓ Verified 100% Exact Match' : '✗ Integrity Mismatch'}</strong></p>
+                            <p style="margin:4px 0; font-size:0.75rem; color:#94A3B8;">Decompressed Preview: <code>"${this.escapeHtml(data.decompressed_preview || '')}"</code></p>
                         </div>
                     </div>
                 </div>
@@ -639,6 +860,13 @@ class TextSuiteController {
     }
 
     renderGAResults(data) {
+        this.lastResults.ga = data;
+        this.lastResults.knapsack = null;
+
+        const lang = this.currentLang || 'en';
+        const i18n = window.I18N_EXPLANATIONS ? (window.I18N_EXPLANATIONS[lang] || window.I18N_EXPLANATIONS.en) : null;
+        const ui = window.I18N_UI ? (window.I18N_UI[lang] || window.I18N_UI.en) : null;
+
         document.getElementById('ga-result-fitness').textContent = data.total_value;
         document.getElementById('ga-result-weight').textContent = `${data.total_weight} / ${data.capacity}`;
         document.getElementById('ga-result-optimality').textContent = `${data.comparison?.optimality_ratio}% of DP Exact`;
@@ -660,20 +888,42 @@ class TextSuiteController {
 
         // Render Educational Flow Breakdown
         const flowContainer = document.getElementById('optimization-flow-content');
-        if (flowContainer) {
-            flowContainer.innerHTML = `
-                <div class="flow-summary-banner">
-                    <strong>Bakit Ganyan ang Result?</strong> ${data.why_result || data.details}
-                </div>
-                <div class="flow-step-list">
+        if (flowContainer && i18n) {
+            const gEntry = i18n.genetic_algorithm;
+            const whyText = window.formatI18nText(gEntry.why, {
+                generations: data.generations,
+                population_size: data.population_size,
+                initial_fitness: data.initial_fitness,
+                final_fitness: data.final_fitness,
+                optimality_ratio: data.comparison?.optimality_ratio || 100,
+                capacity: data.capacity,
+                cx_rate: data.crossover_rate,
+                mut_rate: data.mutation_rate
+            });
+
+            const stepsHtml = gEntry.steps.map((st, idx) => {
+                const formatted = window.formatI18nText(st, {
+                    population_size: data.population_size,
+                    capacity: data.capacity,
+                    cx_rate: data.crossover_rate,
+                    mut_rate: data.mutation_rate
+                });
+                return `
                     <div class="flow-step-item">
-                        <span class="flow-step-num">Ebolusyon</span>
+                        <span class="flow-step-num">${ui?.step_lbl || 'Step'} ${idx + 1}</span>
                         <div class="flow-step-content">
-                            <strong>Simulated Natural Selection Mechanics:</strong>
-                            <p style="margin:4px 0; white-space:pre-line;">${data.flow_explanation || '-'}</p>
-                            <p style="margin:4px 0; font-size:0.75rem; color:#A78BFA;">Generation 1 Best: <strong>${data.initial_fitness}</strong> &rarr; Final Generation Best: <strong>${data.final_fitness}</strong> (${data.comparison?.optimality_ratio}% ng DP Theoretical Optimum).</p>
+                            <p style="margin:0;">${formatted}</p>
                         </div>
                     </div>
+                `;
+            }).join('');
+
+            flowContainer.innerHTML = `
+                <div class="flow-summary-banner">
+                    <strong>${ui?.why_result_title || 'Why this Result?'}:</strong> ${whyText}
+                </div>
+                <div class="flow-step-list">
+                    ${stepsHtml}
                 </div>
             `;
         }
@@ -786,35 +1036,49 @@ class TextSuiteController {
             }
             document.getElementById('knapsack-compare-card')?.classList.remove('hidden');
 
-            // Render Knapsack Flow
-            const flowContainer = document.getElementById('optimization-flow-content');
-            if (flowContainer) {
-                flowContainer.innerHTML = `
-                    <div class="flow-summary-banner">
-                        <strong>Bakit Ganyan ang Result?</strong> ${data.dp.why_result}
-                    </div>
-                    <div class="flow-step-list">
-                        <div class="flow-step-item">
-                            <span class="flow-step-num">DP</span>
-                            <div class="flow-step-content">
-                                <strong>Dynamic Programming (Exact Solvers):</strong>
-                                <p style="margin:4px 0;">${data.dp.flow_explanation}</p>
-                            </div>
-                        </div>
-                        <div class="flow-step-item">
-                            <span class="flow-step-num">Greedy</span>
-                            <div class="flow-step-content">
-                                <strong>Greedy Heuristic (Ratio Solvers):</strong>
-                                <p style="margin:4px 0;">${data.greedy.flow_explanation}</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
+            this.lastResults.knapsack = data;
+            this.lastResults.ga = null;
+            this.renderKnapsackFlow(data);
 
             window.showToast('Computed DP and Greedy knapsack solutions.', 'success');
         } catch (err) {
             window.showToast('Error running Knapsack optimization.', 'error');
+        }
+    }
+
+    renderKnapsackFlow(data) {
+        const flowContainer = document.getElementById('optimization-flow-content');
+        if (!flowContainer) return;
+
+        const lang = this.currentLang || 'en';
+        const i18n = window.I18N_EXPLANATIONS ? (window.I18N_EXPLANATIONS[lang] || window.I18N_EXPLANATIONS.en) : null;
+        const ui = window.I18N_UI ? (window.I18N_UI[lang] || window.I18N_UI.en) : null;
+
+        if (i18n && i18n.knapsack_dp_greedy) {
+            const kEntry = i18n.knapsack_dp_greedy;
+            const whyText = window.formatI18nText(kEntry.why, {
+                dp_val: data.dp.total_value,
+                greedy_val: data.greedy.total_value,
+                optimality_ratio: ((data.greedy.total_value / Math.max(1, data.dp.total_value)) * 100).toFixed(1)
+            });
+
+            const stepsHtml = kEntry.steps.map((st, idx) => `
+                <div class="flow-step-item">
+                    <span class="flow-step-num">${ui?.step_lbl || 'Step'} ${idx + 1}</span>
+                    <div class="flow-step-content">
+                        <p style="margin:0;">${st}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            flowContainer.innerHTML = `
+                <div class="flow-summary-banner">
+                    <strong>${ui?.why_result_title || 'Why this Result?'}:</strong> ${whyText}
+                </div>
+                <div class="flow-step-list">
+                    ${stepsHtml}
+                </div>
+            `;
         }
     }
 
@@ -874,37 +1138,67 @@ class TextSuiteController {
                 `).join('');
             }
 
-            // Render Parallel Flow Breakdown
-            const flowContainer = document.getElementById('parallel-flow-content');
-            if (flowContainer) {
-                flowContainer.innerHTML = `
-                    <div class="flow-summary-banner">
-                        <strong>Bakit Ganyan ang Result?</strong> ${data.why_result}
-                    </div>
-                    <div class="flow-step-list">
-                        <div class="flow-step-item">
-                            <span class="flow-step-num">Concurrency</span>
-                            <div class="flow-step-content">
-                                <strong>Multi-Thread Partitioning & Boundary Safety Margin:</strong>
-                                <p style="margin:4px 0; white-space:pre-line;">${data.flow_explanation}</p>
-                                <div class="chunk-overlap-bar">
-                                    ${(data.partitions || []).map(p => `
-                                        <div class="chunk-segment">
-                                            <span>Worker #${p.worker_id}</span>
-                                            <div style="font-size:0.68rem; color:#94A3B8;">${p.char_length} chars</div>
-                                            <span class="overlap-badge">+${data.overlap_margin} overlap</span>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
+            this.lastResults.parallelSearch = data;
+            this.lastResults.randomSort = null;
+            this.lastResults.quickSelect = null;
+            this.renderParallelSearchFlow(data);
 
             window.showToast(`Parallel search complete with ${data.speedup}x speedup.`, 'success');
         } catch (err) {
             window.showToast('Error during parallel search.', 'error');
+        }
+    }
+
+    renderParallelSearchFlow(data) {
+        const flowContainer = document.getElementById('parallel-flow-content');
+        if (!flowContainer) return;
+
+        const lang = this.currentLang || 'en';
+        const i18n = window.I18N_EXPLANATIONS ? (window.I18N_EXPLANATIONS[lang] || window.I18N_EXPLANATIONS.en) : null;
+        const ui = window.I18N_UI ? (window.I18N_UI[lang] || window.I18N_UI.en) : null;
+
+        if (i18n && i18n.parallel_search) {
+            const pEntry = i18n.parallel_search;
+            const whyText = window.formatI18nText(pEntry.why, {
+                workers: data.workers,
+                speedup: data.speedup,
+                parallel_time: data.parallel_time_us,
+                seq_time: data.sequential_time_us
+            });
+
+            const stepsHtml = pEntry.steps.map((st, idx) => {
+                const formatted = window.formatI18nText(st, {
+                    char_count: data.text_length,
+                    workers: data.workers,
+                    overlap: data.overlap_margin
+                });
+                return `
+                    <div class="flow-step-item">
+                        <span class="flow-step-num">${ui?.step_lbl || 'Step'} ${idx + 1}</span>
+                        <div class="flow-step-content">
+                            <p style="margin:0;">${formatted}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            flowContainer.innerHTML = `
+                <div class="flow-summary-banner">
+                    <strong>${ui?.why_result_title || 'Why this Result?'}:</strong> ${whyText}
+                </div>
+                <div class="flow-step-list">
+                    ${stepsHtml}
+                </div>
+                <div class="chunk-overlap-bar" style="margin-top:12px;">
+                    ${(data.partitions || []).map(p => `
+                        <div class="chunk-segment">
+                            <span>Worker #${p.worker_id}</span>
+                            <div style="font-size:0.68rem; color:#94A3B8;">${p.char_length} chars</div>
+                            <span class="overlap-badge">+${data.overlap_margin} overlap</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
         }
     }
 
@@ -924,34 +1218,57 @@ class TextSuiteController {
             document.getElementById('random-sort-time').textContent = `${data.time_microseconds} µs`;
             document.getElementById('random-sort-output').textContent = (data.sorted_sample || []).join(' | ');
 
-            // Render Flow Breakdown
-            const flowContainer = document.getElementById('parallel-flow-content');
-            if (flowContainer) {
-                flowContainer.innerHTML = `
-                    <div class="flow-summary-banner">
-                        <strong>Bakit Ganyan ang Result?</strong> ${data.why_result}
-                    </div>
-                    <div class="flow-step-list">
-                        <div class="flow-step-item">
-                            <span class="flow-step-num">Pivot</span>
-                            <div class="flow-step-content">
-                                <strong>Random Pivot Selection vs Deterministic Pivot:</strong>
-                                <p style="margin:4px 0;">${data.flow_explanation}</p>
-                                <div style="margin-top:8px;">
-                                    <span style="font-size:0.75rem; color:#94A3B8;">Sample Random Pivot Choices:</span>
-                                    <div class="chips-flex-wrap">
-                                        ${(data.pivot_samples || []).map(ps => `<span class="chip-item">Pivot: <span class="chip-key">"${ps.pivot_value}"</span> (idx: ${ps.chosen_index})</span>`).join('')}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
+            this.lastResults.randomSort = data;
+            this.lastResults.parallelSearch = null;
+            this.lastResults.quickSelect = null;
+            this.renderRandomSortFlow(data);
 
             window.showToast(`Randomized Quicksort sorted ${data.original_count} tokens.`, 'success');
         } catch (err) {
             window.showToast('Error running Randomized Quicksort.', 'error');
+        }
+    }
+
+    renderRandomSortFlow(data) {
+        const flowContainer = document.getElementById('parallel-flow-content');
+        if (!flowContainer) return;
+
+        const lang = this.currentLang || 'en';
+        const i18n = window.I18N_EXPLANATIONS ? (window.I18N_EXPLANATIONS[lang] || window.I18N_EXPLANATIONS.en) : null;
+        const ui = window.I18N_UI ? (window.I18N_UI[lang] || window.I18N_UI.en) : null;
+
+        if (i18n && i18n.randomized_quicksort) {
+            const qsEntry = i18n.randomized_quicksort;
+            const whyText = window.formatI18nText(qsEntry.why, {
+                count: data.original_count,
+                time_us: data.time_microseconds,
+                comparisons: data.comparisons?.toLocaleString(),
+                depth: data.recursion_depth
+            });
+
+            const stepsHtml = qsEntry.steps.map((st, idx) => `
+                <div class="flow-step-item">
+                    <span class="flow-step-num">${ui?.step_lbl || 'Step'} ${idx + 1}</span>
+                    <div class="flow-step-content">
+                        <p style="margin:0;">${st}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            flowContainer.innerHTML = `
+                <div class="flow-summary-banner">
+                    <strong>${ui?.why_result_title || 'Why this Result?'}:</strong> ${whyText}
+                </div>
+                <div class="flow-step-list">
+                    ${stepsHtml}
+                </div>
+                <div style="margin-top:12px;">
+                    <span style="font-size:0.75rem; color:#94A3B8;">Sample Random Pivot Choices:</span>
+                    <div class="chips-flex-wrap">
+                        ${(data.pivot_samples || []).map(ps => `<span class="chip-item">Pivot: <span class="chip-key">"${ps.pivot_value}"</span> (idx: ${ps.chosen_index})</span>`).join('')}
+                    </div>
+                </div>
+            `;
         }
     }
 
@@ -969,28 +1286,51 @@ class TextSuiteController {
             if (data.success) {
                 document.getElementById('quickselect-result').textContent = `Rank k=${data.k} Element: "${data.element}" (${data.time_microseconds} µs)`;
                 
-                const flowContainer = document.getElementById('parallel-flow-content');
-                if (flowContainer) {
-                    flowContainer.innerHTML = `
-                        <div class="flow-summary-banner">
-                            <strong>Bakit Ganyan ang Result?</strong> ${data.why_result}
-                        </div>
-                        <div class="flow-step-list">
-                            <div class="flow-step-item">
-                                <span class="flow-step-num">QuickSelect</span>
-                                <div class="flow-step-content">
-                                    <strong>Expected O(n) Rank Query:</strong>
-                                    <p style="margin:4px 0;">${data.flow_explanation}</p>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }
+                this.lastResults.quickSelect = data;
+                this.lastResults.parallelSearch = null;
+                this.lastResults.randomSort = null;
+                this.renderQuickSelectFlow(data);
 
                 window.showToast(`QuickSelect resolved rank ${data.k} in O(n) expected time.`, 'success');
             }
         } catch (err) {
             window.showToast('Quickselect error.', 'error');
+        }
+    }
+
+    renderQuickSelectFlow(data) {
+        const flowContainer = document.getElementById('parallel-flow-content');
+        if (!flowContainer) return;
+
+        const lang = this.currentLang || 'en';
+        const i18n = window.I18N_EXPLANATIONS ? (window.I18N_EXPLANATIONS[lang] || window.I18N_EXPLANATIONS.en) : null;
+        const ui = window.I18N_UI ? (window.I18N_UI[lang] || window.I18N_UI.en) : null;
+
+        if (i18n && i18n.randomized_quickselect) {
+            const qselEntry = i18n.randomized_quickselect;
+            const whyText = window.formatI18nText(qselEntry.why, {
+                k: data.k,
+                element: data.element,
+                time_us: data.time_microseconds
+            });
+
+            const stepsHtml = qselEntry.steps.map((st, idx) => `
+                <div class="flow-step-item">
+                    <span class="flow-step-num">${ui?.step_lbl || 'Step'} ${idx + 1}</span>
+                    <div class="flow-step-content">
+                        <p style="margin:0;">${st}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            flowContainer.innerHTML = `
+                <div class="flow-summary-banner">
+                    <strong>${ui?.why_result_title || 'Why this Result?'}:</strong> ${whyText}
+                </div>
+                <div class="flow-step-list">
+                    ${stepsHtml}
+                </div>
+            `;
         }
     }
 

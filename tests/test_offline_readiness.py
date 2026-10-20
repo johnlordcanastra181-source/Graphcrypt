@@ -50,7 +50,9 @@ class TestOfflineReadiness(unittest.TestCase):
         res = client.get("/")
         self.assertEqual(res.status_code, 200)
         self.assertIn(b"lucide.min.js", res.data)
-        self.assertIn(b"FLOW & BAKIT GANYAN ANG RESULT?", res.data)
+        self.assertIn(b"i18n_explanations.js", res.data)
+        self.assertIn(b"HOW IT WORKS & WHY THIS RESULT?", res.data)
+        self.assertIn(b"lang-selector-group", res.data)
 
 
 class TestEducationalFlowExplanations(unittest.TestCase):
