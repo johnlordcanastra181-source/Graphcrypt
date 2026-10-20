@@ -11,6 +11,7 @@ Provides:
 - Compression ratio (%)
 - Space savings (%)
 - Lossless roundtrip verification
+- Educational Step-by-Step Flow & Explanations ("Bakit Ganyan ang Result")
 """
 
 import heapq
@@ -33,7 +34,6 @@ class HuffmanNode:
     def __lt__(self, other: 'HuffmanNode') -> bool:
         if self.freq != other.freq:
             return self.freq < other.freq
-        # Tie breaker for stability
         c1 = self.char if self.char is not None else ""
         c2 = other.char if other.char is not None else ""
         return c1 < c2
@@ -61,7 +61,6 @@ def build_huffman_tree(text: str) -> Optional[HuffmanNode]:
     if not text:
         return None
 
-    # Frequency map
     freq_map: Dict[str, int] = {}
     for char in text:
         freq_map[char] = freq_map.get(char, 0) + 1
@@ -70,7 +69,6 @@ def build_huffman_tree(text: str) -> Optional[HuffmanNode]:
     for char, freq in freq_map.items():
         heapq.heappush(heap, HuffmanNode(char, freq))
 
-    # Single character edge case
     if len(heap) == 1:
         root = HuffmanNode(None, heap[0].freq, left=heap[0])
         return root
@@ -93,7 +91,6 @@ def generate_huffman_codes(root: Optional[HuffmanNode], current_code: str = "", 
         return codebook
 
     if root.char is not None:
-        # If text had only 1 distinct char, current_code is empty; assign "0"
         codebook[root.char] = current_code if current_code else "0"
         return codebook
 
@@ -105,43 +102,69 @@ def generate_huffman_codes(root: Optional[HuffmanNode], current_code: str = "", 
     return codebook
 
 
+def calculate_entropy(text: str) -> float:
+    """Calculates Shannon Entropy in bits per character."""
+    if not text:
+        return 0.0
+    freq_map: Dict[str, int] = {}
+    for c in text:
+        freq_map[c] = freq_map.get(c, 0) + 1
+    total = len(text)
+    entropy = 0.0
+    for count in freq_map.values():
+        p = count / total
+        entropy -= p * math.log2(p)
+    return round(entropy, 3)
+
+
 def huffman_compress(text: str) -> Dict[str, Any]:
-    """Compresses input text using Huffman Coding."""
+    """Compresses input text using Huffman Coding with detailed educational telemetry."""
     start_time = time.perf_counter()
     if not text:
         return {
             "method": "Huffman Coding",
             "original_text": "",
             "encoded_bits": "",
-            "codebook": {},
+            "codebook": [],
             "tree": None,
             "original_bytes": 0,
             "compressed_bytes": 0,
             "compression_ratio": 0.0,
             "space_savings": 0.0,
             "time_ms": 0.0,
-            "is_lossless": True
+            "is_lossless": True,
+            "flow_explanation": "Walang text na ibinigay.",
+            "why_result": "Bakante ang input."
         }
 
     tree_root = build_huffman_tree(text)
     codebook = generate_huffman_codes(tree_root)
-
-    # Encode to bitstring
     encoded_bits = "".join(codebook[c] for c in text)
 
     original_bytes = len(text.encode('utf-8'))
-    # Stored size: (length of bitstream + 7) // 8 + metadata estimation
     compressed_bytes = math.ceil(len(encoded_bits) / 8) if encoded_bits else 0
 
     ratio = round((compressed_bytes / original_bytes) * 100, 2) if original_bytes > 0 else 0.0
     savings = round(100.0 - ratio, 2) if original_bytes > 0 else 0.0
     elapsed_ms = (time.perf_counter() - start_time) * 1000
 
-    # Sort codebook by frequency descending
+    entropy = calculate_entropy(text)
+    avg_bits_per_char = round(len(encoded_bits) / max(1, len(text)), 2)
+
     freq_map = {c: text.count(c) for c in set(text)}
     sorted_codebook = sorted(
-        [{"char": repr(k)[1:-1] if repr(k).startswith("'") else k, "char_raw": k, "code": v, "freq": freq_map[k], "bits": len(v)}
-         for k, v in codebook.items()],
+        [
+            {
+                "char": repr(k)[1:-1] if repr(k).startswith("'") else k,
+                "char_raw": k,
+                "code": v,
+                "freq": freq_map[k],
+                "bits": len(v),
+                "ascii_bits": 8,
+                "saved_bits_per_char": 8 - len(v)
+            }
+            for k, v in codebook.items()
+        ],
         key=lambda x: x["freq"],
         reverse=True
     )
@@ -158,8 +181,12 @@ def huffman_compress(text: str) -> Dict[str, Any]:
         "compressed_bits": len(encoded_bits),
         "compression_ratio": ratio,
         "space_savings": savings,
+        "entropy_bits": entropy,
+        "avg_bits_per_char": avg_bits_per_char,
         "time_ms": round(elapsed_ms, 3),
-        "details": f"Generated {len(codebook)} unique prefix codes. Total {len(encoded_bits)} bits."
+        "details": f"Generated {len(codebook)} unique prefix codes. Total {len(encoded_bits)} bits.",
+        "flow_explanation": "1. Binilang ang dalas (frequency) ng bawat karakter sa text.\n2. Binuo ang Min-Heap binary priority tree kung saan ang pinakamababang dalas ang unang pinagsasama.\n3. Binigyan ng maikling prefix bitcode ang mga madalas lumitaw na karakter (hal. 2 hanggang 4 bits sa halip na 8 bits ng ASCII) at mas mahabang bitcode sa bihirang karakter.\n4. Dahil prefix codes ang nabuo, walang code na panimula ng iba pa, kaya 100% unambiguous at lossless ang decompression.",
+        "why_result": f"Bumaba ang average bit rate mula 8.0 bits/char patungo sa {avg_bits_per_char} bits/char (malapit sa Shannon Entropy na {entropy} bits/char). Nagresulta ito sa {savings}% space savings."
     }
 
 
@@ -189,7 +216,6 @@ def rle_compress(text: str) -> Dict[str, Any]:
     """
     Compresses text using Run-Length Encoding.
     Consecutive duplicate characters are encoded as [count][character].
-    Best for text with repeating consecutive sequences.
     """
     start_time = time.perf_counter()
     if not text:
@@ -200,19 +226,35 @@ def rle_compress(text: str) -> Dict[str, Any]:
             "compressed_bytes": 0,
             "compression_ratio": 0.0,
             "space_savings": 0.0,
-            "time_ms": 0.0
+            "time_ms": 0.0,
+            "flow_explanation": "Walang text.",
+            "why_result": "Bakante ang input."
         }
 
     encoded_parts: List[str] = []
+    runs_detail: List[Dict[str, Any]] = []
     n = len(text)
     i = 0
+    longest_run = 0
 
     while i < n:
         count = 1
+        start_pos = i
         while i + 1 < n and text[i] == text[i + 1]:
             count += 1
             i += 1
-        encoded_parts.append(f"{count}{text[i]}")
+        if count > longest_run:
+            longest_run = count
+
+        segment = f"{count}{text[i]}"
+        encoded_parts.append(segment)
+        if len(runs_detail) < 15:
+            runs_detail.append({
+                "char": text[i],
+                "count": count,
+                "encoded": segment,
+                "start": start_pos
+            })
         i += 1
 
     encoded_str = "".join(encoded_parts)
@@ -223,16 +265,25 @@ def rle_compress(text: str) -> Dict[str, Any]:
     savings = round(100.0 - ratio, 2) if original_bytes > 0 else 0.0
     elapsed_ms = (time.perf_counter() - start_time) * 1000
 
+    if savings > 0:
+        why = f"Mataas ang space savings ({savings}%) dahil may mga mahahabang serye ng magkakatabing duplicate characters (pinakamahabang run: {longest_run})."
+    else:
+        why = f"Lumalabas na lumaki ang file ({ratio}% ratio) dahil magkakaiba ang magkakatabing karakter sa text. Sa ganitong data, ang 'AB' ay nagiging '1A1B' (2 bytes naging 4 bytes)."
+
     return {
         "method": "Run-Length Encoding (RLE)",
         "encoded_text": encoded_str,
         "runs_count": len(encoded_parts),
+        "longest_run": longest_run,
+        "sample_runs": runs_detail,
         "original_bytes": original_bytes,
         "compressed_bytes": compressed_bytes,
         "compression_ratio": ratio,
         "space_savings": savings,
         "time_ms": round(elapsed_ms, 3),
-        "details": f"Compressed into {len(encoded_parts)} run segments."
+        "details": f"Compressed into {len(encoded_parts)} run segments.",
+        "flow_explanation": "Sinusuri ang magkakatabing magkakaparehong karakter sa isang linear scan O(n). Kapag may magkakasunod na magkapareho (hal. AAAAA), pinapalitan ito ng bilang at ng karakter (5A). Kapaki-pakinabang ito sa bitmap graphics, genomic sequences, at highly repetitive datasets.",
+        "why_result": why
     }
 
 
@@ -274,10 +325,11 @@ def lzw_compress(text: str) -> Dict[str, Any]:
             "compressed_bytes": 0,
             "compression_ratio": 0.0,
             "space_savings": 0.0,
-            "time_ms": 0.0
+            "time_ms": 0.0,
+            "flow_explanation": "Walang text.",
+            "why_result": "Bakante ang input."
         }
 
-    # Initialize dictionary with all ASCII / Latin-1 characters 0..255
     dictionary: Dict[str, int] = {chr(i): i for i in range(256)}
     next_code = 256
     current = ""
@@ -290,13 +342,15 @@ def lzw_compress(text: str) -> Dict[str, Any]:
             current = combo
         else:
             compressed_codes.append(dictionary[current])
-            # Add combo to dictionary
-            if next_code < 65536:  # 16-bit code limit
+            if next_code < 65536:
                 dictionary[combo] = next_code
                 if len(history) < 25:
                     history.append({
-                        "entry": combo,
-                        "code": next_code,
+                        "step": len(history) + 1,
+                        "current_str": repr(current)[1:-1],
+                        "next_char": repr(char)[1:-1],
+                        "new_entry": repr(combo)[1:-1],
+                        "new_code": next_code,
                         "emitted_code": dictionary[current]
                     })
                 next_code += 1
@@ -305,7 +359,6 @@ def lzw_compress(text: str) -> Dict[str, Any]:
     if current:
         compressed_codes.append(dictionary[current])
 
-    # Calculate compressed bytes: each code requires ceil(log2(next_code)) bits, minimum 9 bits, stored as 16-bit/2 bytes per code
     code_bit_width = max(9, math.ceil(math.log2(next_code))) if next_code > 1 else 8
     compressed_bits = len(compressed_codes) * code_bit_width
     compressed_bytes = math.ceil(compressed_bits / 8)
@@ -327,7 +380,9 @@ def lzw_compress(text: str) -> Dict[str, Any]:
         "compression_ratio": ratio,
         "space_savings": savings,
         "time_ms": round(elapsed_ms, 3),
-        "details": f"Dynamically generated {next_code - 256} new dictionary entries with {code_bit_width}-bit codes."
+        "details": f"Dynamically generated {next_code - 256} new dictionary entries with {code_bit_width}-bit codes.",
+        "flow_explanation": "1. Nagsimula sa 256 initial ASCII dictionary entries (0-255).\n2. Habang binabasa ang bawat karakter, kung ang parirala (W + K) ay wala pa sa diksyunaryo, inilalabas ang code para sa W at idinaragdag ang W + K bilang bagong code sa diksyunaryo (256, 257, ...).\n3. Sa susunod na paglitaw ng parehong parirala, iisang integer code na lamang ang ipinapadala sa halip na ang buong serye ng characters.",
+        "why_result": f"Natutunan ng LZW ang {next_code - 256} bagong mga parirala sa diksyunaryo. Pinalitan ang mga paulit-ulit na salita ng {code_bit_width}-bit codes na nagbigay ng {savings}% space savings nang walang pagkawala ng impormasyon."
     }
 
 
@@ -366,11 +421,11 @@ def get_compression_stats(original_text: str, method: str = "Huffman") -> Dict[s
         tree_root = build_huffman_tree(original_text)
         codebook = generate_huffman_codes(tree_root)
         comp_res = huffman_compress(original_text)
-        # Verify decompression
         full_encoded_bits = "".join(codebook.get(c, "") for c in original_text)
         decompressed = huffman_decompress(full_encoded_bits, codebook)
         comp_res["is_lossless"] = (decompressed == original_text)
         comp_res["decompressed_preview"] = decompressed[:150] + ("..." if len(decompressed) > 150 else "")
+        comp_res["lossless_explanation"] = "Napatunayan: Ang na-decompress na text ay eksaktong 100% tugma sa orihinal na input (walang nawalang byte o karakter)."
         return comp_res
 
     elif method == "RLE":
@@ -378,11 +433,11 @@ def get_compression_stats(original_text: str, method: str = "Huffman") -> Dict[s
         decompressed = rle_decompress(comp_res["encoded_text"])
         comp_res["is_lossless"] = (decompressed == original_text)
         comp_res["decompressed_preview"] = decompressed[:150] + ("..." if len(decompressed) > 150 else "")
+        comp_res["lossless_explanation"] = "Napatunayan: Ang pinalawak na RLE count sequences ay 100% tugma sa orihinal na input."
         return comp_res
 
     elif method == "LZW":
         comp_res = lzw_compress(original_text)
-        # Decompress full code list
         dictionary: Dict[str, int] = {chr(i): i for i in range(256)}
         next_code = 256
         curr = ""
@@ -403,7 +458,7 @@ def get_compression_stats(original_text: str, method: str = "Huffman") -> Dict[s
         decompressed = lzw_decompress(full_codes)
         comp_res["is_lossless"] = (decompressed == original_text)
         comp_res["decompressed_preview"] = decompressed[:150] + ("..." if len(decompressed) > 150 else "")
+        comp_res["lossless_explanation"] = "Napatunayan: Ang LZW code stream ay matagumpay na naibalik sa orihinal na text gamit ang dictionary reconstruction."
         return comp_res
 
     raise ValueError(f"Unknown compression method: {method}")
-

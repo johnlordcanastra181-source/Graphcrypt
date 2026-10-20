@@ -7,6 +7,7 @@ Implements:
 3. Boyer-Moore (Bad Character + Good Suffix)
 4. Rabin-Karp (Rolling Polynomial Hash)
 5. Approximate String Matching (Levenshtein Distance)
+Includes step-by-step explanatory flow and telemetry ("Bakit Ganyan ang Result").
 """
 
 import time
@@ -33,7 +34,9 @@ def brute_force_search(text: str, pattern: str) -> Dict[str, Any]:
             "match_count": 0,
             "comparisons": comparisons,
             "time_microseconds": round(elapsed_us, 2),
-            "details": f"Searched text of {n} chars for pattern of {m} chars."
+            "details": f"Searched text of {n} chars for pattern of {m} chars.",
+            "flow_explanation": "Walang wastong haba para sa paghahanap.",
+            "why_result": "Hindi sapat ang haba ng text o pattern upang masuri."
         }
 
     for i in range(n - m + 1):
@@ -53,7 +56,9 @@ def brute_force_search(text: str, pattern: str) -> Dict[str, Any]:
         "match_count": len(matches),
         "comparisons": comparisons,
         "time_microseconds": round(elapsed_us, 2),
-        "details": f"Found {len(matches)} occurrence(s) with {comparisons} character comparison(s)."
+        "details": f"Found {len(matches)} occurrence(s) with {comparisons} character comparison(s).",
+        "flow_explanation": "Sinusuri ang bawat posisyon mula simula hanggang dulo. Kapag nagka-mismatch, umuusad lamang ng 1 hakbang (i + 1) at inuulit muli ang paghahambing mula sa unang titik ng pattern nang walang anumang paglaktaw o precomputation.",
+        "why_result": f"Nagsagawa ng {comparisons} comparisons sa kabuuang {n} text characters. Walang preprocessing kaya O(1) auxiliary space, ngunit pinakamaraming character comparisons dahil walang ginagawang paglaktaw."
     }
 
 
@@ -99,8 +104,11 @@ def kmp_search(text: str, pattern: str) -> Dict[str, Any]:
             "match_count": 0,
             "comparisons": 0,
             "lps_table": [],
+            "lps_breakdown": [],
             "time_microseconds": round(elapsed_us, 2),
-            "details": "Invalid length bounds."
+            "details": "Invalid length bounds.",
+            "flow_explanation": "Walang wastong haba para sa paghahanap.",
+            "why_result": "Hindi sapat ang haba ng text o pattern."
         }
 
     lps, prep_comparisons = compute_lps(pattern)
@@ -108,6 +116,7 @@ def kmp_search(text: str, pattern: str) -> Dict[str, Any]:
 
     i = 0  # text index
     j = 0  # pattern index
+    skips_count = 0
 
     while i < n:
         comparisons += 1
@@ -118,21 +127,39 @@ def kmp_search(text: str, pattern: str) -> Dict[str, Any]:
         if j == m:
             matches.append(i - j)
             j = lps[j - 1]
+            skips_count += 1
         elif i < n and pattern[j] != text[i]:
             if j != 0:
                 j = lps[j - 1]
+                skips_count += 1
             else:
                 i += 1
 
     elapsed_us = (time.perf_counter() - start_time) * 1_000_000
+
+    # Build human-readable LPS breakdown
+    lps_breakdown = [
+        {
+            "index": idx,
+            "char": pattern[idx],
+            "lps_val": lps[idx],
+            "prefix_suffix": pattern[:lps[idx]] if lps[idx] > 0 else "-"
+        }
+        for idx in range(m)
+    ]
+
     return {
         "algorithm": "Knuth-Morris-Pratt (KMP)",
         "matches": matches,
         "match_count": len(matches),
         "comparisons": comparisons,
         "lps_table": lps,
+        "lps_breakdown": lps_breakdown,
+        "skips_count": skips_count,
         "time_microseconds": round(elapsed_us, 2),
-        "details": f"Found {len(matches)} match(es). LPS Table: {lps}"
+        "details": f"Found {len(matches)} match(es). LPS Table: {lps}",
+        "flow_explanation": "Binuo muna ang LPS (Longest Proper Prefix which is also Suffix) array. Kapag nagkaroon ng mismatch sa index j, HINDI na bumabalik ang text pointer i pabalik; inililipat lamang ang pattern pointer sa j = LPS[j - 1]. Dahil dito, strictly linear O(n + m) ang oras.",
+        "why_result": f"Nakamit ang {len(matches)} match(es) sa loob ng {round(elapsed_us, 1)} µs. Nakagawa ng {skips_count} smart skips gamit ang LPS table kaya naiwasan ang redundant comparisons."
     }
 
 
@@ -164,12 +191,16 @@ def boyer_moore_search(text: str, pattern: str) -> Dict[str, Any]:
             "matches": matches,
             "match_count": 0,
             "comparisons": 0,
+            "bad_char_table": {},
             "time_microseconds": round(elapsed_us, 2),
-            "details": "Invalid length bounds."
+            "details": "Invalid length bounds.",
+            "flow_explanation": "Walang wastong haba para sa paghahanap.",
+            "why_result": "Hindi sapat ang haba ng text o pattern."
         }
 
     bad_char = compute_bad_char_table(pattern)
     shift = 0
+    total_shifts = 0
 
     while shift <= (n - m):
         j = m - 1
@@ -182,9 +213,12 @@ def boyer_moore_search(text: str, pattern: str) -> Dict[str, Any]:
         if j < 0:
             matches.append(shift)
             shift += (m - bad_char.get(text[shift + m], -1)) if (shift + m < n) else 1
+            total_shifts += 1
         else:
             bc_shift = bad_char.get(text[shift + j], m)
-            shift += max(1, bc_shift - (m - 1 - j))
+            step_shift = max(1, bc_shift - (m - 1 - j))
+            shift += step_shift
+            total_shifts += 1
 
     elapsed_us = (time.perf_counter() - start_time) * 1_000_000
     return {
@@ -192,9 +226,12 @@ def boyer_moore_search(text: str, pattern: str) -> Dict[str, Any]:
         "matches": matches,
         "match_count": len(matches),
         "comparisons": comparisons,
-        "bad_char_table": {k: v for k, v in list(bad_char.items())[:15]},
+        "bad_char_table": {k: v for k, v in list(bad_char.items())[:20]},
+        "total_shifts": total_shifts,
         "time_microseconds": round(elapsed_us, 2),
-        "details": f"Found {len(matches)} match(es) with sublinear Boyer-Moore skips."
+        "details": f"Found {len(matches)} match(es) with sublinear Boyer-Moore skips.",
+        "flow_explanation": "Nagsusuri mula kanan pakaliwa (right-to-left). Kapag may mismatched character, tinitingnan ang Bad Character Table. Kung ang character ay wala sa pattern, nilalaktawan agad ang buong haba ng pattern (m characters) sa isang hakbang lang!",
+        "why_result": f"Nakamit ang sublinear performance sa natural text. Nakagawa ng {total_shifts} window shifts, madalas lumalaktaw ng higit sa 1 character bawat hakbang."
     }
 
 
@@ -208,6 +245,7 @@ def rabin_karp_search(text: str, pattern: str, prime: int = 101, base: int = 256
     matches: List[int] = []
     comparisons = 0
     spurious_hits = 0
+    hash_calculations = 0
     n = len(text)
     m = len(pattern)
 
@@ -219,8 +257,11 @@ def rabin_karp_search(text: str, pattern: str, prime: int = 101, base: int = 256
             "match_count": 0,
             "comparisons": 0,
             "spurious_hits": 0,
+            "pattern_hash": 0,
             "time_microseconds": round(elapsed_us, 2),
-            "details": "Invalid length bounds."
+            "details": "Invalid length bounds.",
+            "flow_explanation": "Walang wastong haba para sa paghahanap.",
+            "why_result": "Hindi sapat ang haba ng text o pattern."
         }
 
     h = pow(base, m - 1, prime)
@@ -230,6 +271,8 @@ def rabin_karp_search(text: str, pattern: str, prime: int = 101, base: int = 256
     for i in range(m):
         p_hash = (base * p_hash + ord(pattern[i])) % prime
         t_hash = (base * t_hash + ord(text[i])) % prime
+
+    hash_calculations += 1
 
     for i in range(n - m + 1):
         if p_hash == t_hash:
@@ -248,6 +291,7 @@ def rabin_karp_search(text: str, pattern: str, prime: int = 101, base: int = 256
             t_hash = (base * (t_hash - ord(text[i]) * h) + ord(text[i + m])) % prime
             if t_hash < 0:
                 t_hash += prime
+            hash_calculations += 1
 
     elapsed_us = (time.perf_counter() - start_time) * 1_000_000
     return {
@@ -256,8 +300,12 @@ def rabin_karp_search(text: str, pattern: str, prime: int = 101, base: int = 256
         "match_count": len(matches),
         "comparisons": comparisons,
         "spurious_hits": spurious_hits,
+        "pattern_hash": p_hash,
+        "hash_calculations": hash_calculations,
         "time_microseconds": round(elapsed_us, 2),
-        "details": f"Found {len(matches)} match(es). Spurious hash collisions: {spurious_hits}."
+        "details": f"Found {len(matches)} match(es). Spurious hash collisions: {spurious_hits}.",
+        "flow_explanation": f"Kinakalkula ang numerical polynomial hash ng pattern ({p_hash}) gamit ang prime {prime}. Sa bawat hakbang, ina-update ang window hash sa O(1) arithmetic operations gamit ang rolling hash formula. Kapag nag-match ang numerical hash, saka lamang susuriin ang bawat character.",
+        "why_result": f"Mabilis na nasuri ang {hash_calculations} windows gamit ang rolling hash. Nakaranas lamang ng {spurious_hits} spurious hash collision(s), na nagpapatunay na epektibo ang polynomial hashing."
     }
 
 
@@ -283,7 +331,9 @@ def approximate_search(text: str, pattern: str, max_distance: int = 1) -> Dict[s
             "comparisons": 0,
             "max_distance": max_distance,
             "time_microseconds": round(elapsed_us, 2),
-            "details": "Empty text or pattern."
+            "details": "Empty text or pattern.",
+            "flow_explanation": "Walang text o pattern.",
+            "why_result": "Hindi masusuri ang bakanteng input."
         }
 
     # Sliding window around length m
@@ -332,7 +382,9 @@ def approximate_search(text: str, pattern: str, max_distance: int = 1) -> Dict[s
         "comparisons": comparisons,
         "max_distance": max_distance,
         "time_microseconds": round(elapsed_us, 2),
-        "details": f"Found {len(filtered)} fuzzy match(es) within edit distance <= {max_distance}."
+        "details": f"Found {len(filtered)} fuzzy match(es) within edit distance <= {max_distance}.",
+        "flow_explanation": f"Gumamit ng Dynamic Programming matrix upang kwentahin ang pinakamababang bilang ng edit operations (insertion, deletion, substitution) na kailangan upang maging kapareho ng target pattern ang substring. Pinayagan ang hanggang {max_distance} pagbabago.",
+        "why_result": f"Natagpuan ang {len(filtered)} fuzzy match(es) kahit may kaunting pagkakaiba sa baybay o typo, kapaki-pakinabang para sa natural text search at genomic sequences."
     }
 
 
@@ -352,5 +404,5 @@ def compare_all_matchers(text: str, pattern: str) -> Dict[str, Any]:
         "results": algorithms,
         "matches": res_kmp["matches"],
         "match_count": len(res_kmp["matches"]),
+        "flow_summary": "Ang KMP at Boyer-Moore ay nagpapakita ng pinakakaunting comparisons dahil sa matalinong paglaktaw ng mga nasuring karakter, samantalang ang Brute Force ang may pinakamaraming comparisons."
     }
-

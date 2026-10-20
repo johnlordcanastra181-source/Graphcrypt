@@ -5,13 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Intelligent Text Search, Compression, and Optimization System | BISU Final Project & GraphCrypt</title>
     
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Offline Native Font Fallbacks (Inter / JetBrains Mono / Segoe UI / Consolas) -->
     
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Offline Local Lucide Icons -->
+    <script src="{{ url_for('static', filename='js/lucide.min.js') }}"></script>
     
     <!-- Main Style -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
@@ -762,6 +759,22 @@ Heuristic: Euclidean Distance
                             </table>
                         </div>
                     </div>
+
+                    <!-- Educational Flow Card: Bakit Ganyan ang Result? -->
+                    <div id="pattern-flow-card" class="algo-flow-card">
+                        <div class="flow-card-header">
+                            <span class="flow-card-title">
+                                <i data-lucide="help-circle"></i>
+                                <span>FLOW & BAKIT GANYAN ANG RESULT? (ALGORITHMIC STEP BREAKDOWN)</span>
+                            </span>
+                            <span class="badge-code badge-cyan">Step-by-Step Educational Flow</span>
+                        </div>
+                        <div id="pattern-flow-content">
+                            <div class="flow-summary-banner">
+                                Piliin ang alinmang algorithm sa itaas at pindutin ang "Search" upang makita ang buong step-by-step breakdown kung paano at bakit nito nakuha ang nasabing output.
+                            </div>
+                        </div>
+                    </div>
                 </section>
 
                 <!-- ------------------------------------------ -->
@@ -862,6 +875,22 @@ Heuristic: Euclidean Distance
                                 <tbody id="comp-compare-table-body">
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+
+                    <!-- Educational Flow Card: Bakit Ganyan ang Result? -->
+                    <div id="compression-flow-card" class="algo-flow-card">
+                        <div class="flow-card-header">
+                            <span class="flow-card-title">
+                                <i data-lucide="help-circle"></i>
+                                <span>FLOW & BAKIT GANYAN ANG RESULT? (COMPRESSION MECHANICS)</span>
+                            </span>
+                            <span class="badge-code badge-green">Lossless Integrity Breakdown</span>
+                        </div>
+                        <div id="compression-flow-content">
+                            <div class="flow-summary-banner">
+                                Pindutin ang "▶ Compress Text" o "⚡ Compare All 3 Methods" upang makita ang buong paliwanag kung bakit lumiliit ang file, paano nabuo ang prefix codebook o diksyunaryo, at bakit 100% lossless ang decompression.
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -971,6 +1000,22 @@ Heuristic: Euclidean Distance
                                     <tr><td colspan="6" style="color:#64748B;">Click "Compare DP vs Greedy" to execute benchmark.</td></tr>
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+
+                    <!-- Educational Flow Card: Bakit Ganyan ang Result? -->
+                    <div id="optimization-flow-card" class="algo-flow-card">
+                        <div class="flow-card-header">
+                            <span class="flow-card-title">
+                                <i data-lucide="help-circle"></i>
+                                <span>FLOW & BAKIT GANYAN ANG RESULT? (EVOLUTION & SUBPROBLEM MEMOIZATION)</span>
+                            </span>
+                            <span class="badge-code badge-purple">Metaheuristic & DP Analysis</span>
+                        </div>
+                        <div id="optimization-flow-content">
+                            <div class="flow-summary-banner">
+                                Pindutin ang "▶ Run Genetic Algorithm" o "Compare DP vs Greedy" upang makita ang buong paliwanag kung paano nag-evolve ang fitness score bawat henerasyon at bakit guaranteed global optimum ang Dynamic Programming table.
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -1092,6 +1137,22 @@ Heuristic: Euclidean Distance
                                     </button>
                                 </div>
                                 <div id="quickselect-result" style="font-size:0.8rem; font-family:'JetBrains Mono'; color:#00F0FF; margin-top:10px;">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Educational Flow Card: Bakit Ganyan ang Result? -->
+                    <div id="parallel-flow-card" class="algo-flow-card">
+                        <div class="flow-card-header">
+                            <span class="flow-card-title">
+                                <i data-lucide="help-circle"></i>
+                                <span>FLOW & BAKIT GANYAN ANG RESULT? (CONCURRENCY & RANDOMIZED PIVOTS)</span>
+                            </span>
+                            <span class="badge-code badge-orange">Multi-Threading & Lomuto Partitioning</span>
+                        </div>
+                        <div id="parallel-flow-content">
+                            <div class="flow-summary-banner">
+                                Pindutin ang "▶ Execute Parallel Search" o "▶ Run Randomized QuickSort" upang makita kung paano gumana ang boundary overlap margins sa thread chunks at bakit napigilan ng uniform random pivots ang O(n²) worst-case slowdown.
                             </div>
                         </div>
                     </div>

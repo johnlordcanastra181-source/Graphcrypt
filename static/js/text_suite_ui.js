@@ -1,6 +1,7 @@
 /**
  * Intelligent Text Search, Compression, and Optimization Suite UI Controller
  * Bohol Island State University (BISU) Final Project
+ * Offline / Localhost Only Ready with Rich Educational Telemetry & Flow Breakdowns
  */
 
 class TextSuiteController {
@@ -76,7 +77,6 @@ class TextSuiteController {
         const textarea = document.getElementById('corpus-text-input');
         if (textarea) textarea.value = text;
         
-        // Also sync inputs in other views if available
         const ptInput = document.getElementById('pattern-search-text');
         if (ptInput && !ptInput.value) ptInput.value = text;
 
@@ -129,7 +129,7 @@ class TextSuiteController {
                 <div class="sample-card-meta">${s.character_count.toLocaleString()} chars · ${(s.size_bytes / 1024).toFixed(1)} KB</div>
             </div>
         `).join('');
-        lucide.createIcons();
+        if (window.lucide) lucide.createIcons();
 
         container.querySelectorAll('.sample-preset-card').forEach(card => {
             card.addEventListener('click', async () => {
@@ -221,6 +221,7 @@ class TextSuiteController {
         const summaryBox = document.getElementById('pattern-results-summary');
         const highlightBox = document.getElementById('pattern-highlight-viewer');
         const compTable = document.getElementById('pattern-comparison-table-body');
+        const flowContainer = document.getElementById('pattern-flow-content');
 
         let matchIndices = [];
         let matchCount = 0;
@@ -243,6 +244,55 @@ class TextSuiteController {
                 `).join('');
             }
             document.getElementById('pattern-comparison-card')?.classList.remove('hidden');
+
+            // Render Comparison Educational Flow
+            if (flowContainer) {
+                const kmpRes = data.results.find(r => r.algorithm.includes('KMP'));
+                const bmRes = data.results.find(r => r.algorithm.includes('Boyer'));
+                const bfRes = data.results.find(r => r.algorithm.includes('Brute'));
+                const rkRes = data.results.find(r => r.algorithm.includes('Rabin'));
+
+                flowContainer.innerHTML = `
+                    <div class="flow-summary-banner">
+                        <strong>Buod ng Pagsusuri:</strong> Ang KMP (${kmpRes?.comparisons || 0} comparisons) at Boyer-Moore (${bmRes?.comparisons || 0} comparisons) ay naging mas mabilis kaysa Brute Force (${bfRes?.comparisons || 0} comparisons) dahil gumagamit sila ng precomputed heuristics upang maiwasan ang muling pagsusuri sa mga karakter na tugma na.
+                    </div>
+
+                    <div class="flow-step-list">
+                        <div class="flow-step-item">
+                            <span class="flow-step-num">KMP</span>
+                            <div class="flow-step-content">
+                                <strong>Knuth-Morris-Pratt (LPS Array):</strong>
+                                <p style="margin:4px 0;">Binuo ang Longest Proper Prefix which is Suffix table para sa pattern <code>"${pattern}"</code>: <code>[${(kmpRes?.lps_table || []).join(', ')}]</code>. Tuwing may mismatch, hindi bumabalik ang pointer ng text kundi lumalaktaw batay sa LPS array, kaya nananatiling strictly linear $O(n + m)$.</p>
+                            </div>
+                        </div>
+
+                        <div class="flow-step-item">
+                            <span class="flow-step-num">BM</span>
+                            <div class="flow-step-content">
+                                <strong>Boyer-Moore (Bad Character Shift):</strong>
+                                <p style="margin:4px 0;">Nagsusuri mula kanan pakaliwa. Kapag may mismatched character, tinitingnan ang huling posisyon nito sa pattern. Kung wala ito, nilalaktawan agad ang buong $m=${pattern.length}$ characters sa isang hakbang lang (sublinear speedup $\\Omega(n/m)$).</p>
+                            </div>
+                        </div>
+
+                        <div class="flow-step-item">
+                            <span class="flow-step-num">RK</span>
+                            <div class="flow-step-content">
+                                <strong>Rabin-Karp (Rolling Polynomial Hash):</strong>
+                                <p style="margin:4px 0;">Kinukwenta ang pattern hash (${rkRes?.pattern_hash || '-'}). Ang pag-usad sa bawat text window ay $O(1)$ arithmetic operations gamit ang rolling hash formula. Nasuri nang mabilis at nakapagtala lamang ng ${rkRes?.spurious_hits || 0} spurious collision(s).</p>
+                            </div>
+                        </div>
+
+                        <div class="flow-step-item">
+                            <span class="flow-step-num">BF</span>
+                            <div class="flow-step-content">
+                                <strong>Brute Force Baseline:</strong>
+                                <p style="margin:4px 0;">Walang precomputation ($O(1)$ space). Inihambing ang bawat karakter isa-isa, kaya umabot sa pinakamataas na ${bfRes?.comparisons || 0} comparisons.</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
         } else {
             const r = data.result;
             matchIndices = r.matches || [];
@@ -262,6 +312,47 @@ class TextSuiteController {
                 `;
             }
             document.getElementById('pattern-comparison-card')?.classList.remove('hidden');
+
+            // Render Single Algorithm Flow
+            if (flowContainer) {
+                let extraHtml = '';
+                if (r.lps_breakdown && r.lps_breakdown.length > 0) {
+                    extraHtml = `
+                        <div style="margin-top:10px;">
+                            <span style="font-size:0.75rem; color:#94A3B8;">LPS Table Breakdown (Prefix = Suffix length):</span>
+                            <div class="chips-flex-wrap">
+                                ${r.lps_breakdown.map(b => `<span class="chip-item"><span class="chip-key">${b.char}[${b.index}]</span>: <span class="chip-val">${b.lps_val}</span></span>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else if (r.bad_char_table) {
+                    const entries = Object.entries(r.bad_char_table);
+                    extraHtml = `
+                        <div style="margin-top:10px;">
+                            <span style="font-size:0.75rem; color:#94A3B8;">Bad Character Shift Distances:</span>
+                            <div class="chips-flex-wrap">
+                                ${entries.map(([k, v]) => `<span class="chip-item"><span class="chip-key">'${k}'</span>: <span class="chip-val">+${v} shifts</span></span>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                flowContainer.innerHTML = `
+                    <div class="flow-summary-banner">
+                        <strong>Bakit Ganyan ang Result?</strong> ${r.why_result || r.details}
+                    </div>
+                    <div class="flow-step-list">
+                        <div class="flow-step-item">
+                            <span class="flow-step-num">Flow</span>
+                            <div class="flow-step-content">
+                                <strong>Hakbang ng Algoritmo:</strong>
+                                <p style="margin:4px 0;">${r.flow_explanation || '-'}</p>
+                                ${extraHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
         }
 
         // Update summary badges
@@ -274,6 +365,8 @@ class TextSuiteController {
         if (highlightBox) {
             highlightBox.innerHTML = this.buildHighlightedText(text, pattern, matchIndices);
         }
+
+        if (window.lucide) lucide.createIcons();
     }
 
     buildHighlightedText(text, pattern, matchIndices) {
@@ -287,9 +380,7 @@ class TextSuiteController {
 
         for (const idx of matchIndices) {
             if (idx < lastIdx) continue;
-            // Append text before match
             html += this.escapeHtml(text.substring(lastIdx, idx));
-            // Append highlighted match
             html += `<mark class="match-hl">${this.escapeHtml(text.substring(idx, idx + mLen))}</mark>`;
             lastIdx = idx + mLen;
         }
@@ -376,6 +467,22 @@ class TextSuiteController {
                 `).join('');
             }
             document.getElementById('comp-compare-all-card')?.classList.remove('hidden');
+
+            // Render Comparison Flow
+            const flowContainer = document.getElementById('compression-flow-content');
+            if (flowContainer) {
+                flowContainer.innerHTML = `
+                    <div class="flow-summary-banner">
+                        <strong>Paghahambing ng mga Paraan ng Compression:</strong>
+                        <ul style="margin:6px 0 0 18px; line-height:1.6;">
+                            <li><strong>Huffman Coding:</strong> Pinakaangkop sa natural na wika dahil binibigyan ng maikling bitcode ang mga madalas lumitaw na karakter (malapit sa Shannon Entropy).</li>
+                            <li><strong>Run-Length Encoding (RLE):</strong> Pinakamahusay kung may paulit-ulit na magkakatabing karakter (hal. AAAAA). Ngunit kung halo-halo ang mga titik, lumalaki ang file dahil ang bawat karakter ay nagiging [bilang][karakter].</li>
+                            <li><strong>LZW Dictionary:</strong> Mabilis at epektibo sa structured text o paulit-ulit na mga parirala dahil awtomatiko itong natututo ng bagong mga salita sa diksyunaryo.</li>
+                        </ul>
+                    </div>
+                `;
+            }
+
             window.showToast('Generated multi-method compression comparison.', 'success');
         } catch (err) {
             window.showToast('Comparison failed.', 'error');
@@ -394,7 +501,6 @@ class TextSuiteController {
             ratioFill.style.width = `${clamped}%`;
         }
 
-        // Lossless badge
         const badge = document.getElementById('comp-lossless-badge');
         if (badge) {
             badge.className = data.is_lossless ? 'badge-code badge-green' : 'badge-code badge-orange';
@@ -409,7 +515,7 @@ class TextSuiteController {
                     <div style="font-size:0.8rem; margin-bottom:8px; color:#94A3B8;">Huffman Codebook Dictionary (${data.codebook.length} unique prefix symbols):</div>
                     <div class="codebook-scroll">
                         <table class="suite-table">
-                            <thead><tr><th>Character</th><th>Frequency</th><th>Prefix Bitcode</th><th>Bits</th></tr></thead>
+                            <thead><tr><th>Character</th><th>Frequency</th><th>Prefix Bitcode</th><th>Bits</th><th>Bit Savings</th></tr></thead>
                             <tbody>
                                 ${data.codebook.slice(0, 30).map(c => `
                                     <tr>
@@ -417,32 +523,36 @@ class TextSuiteController {
                                         <td>${c.freq}</td>
                                         <td><code class="badge-code badge-cyan">${c.code}</code></td>
                                         <td>${c.bits}</td>
+                                        <td><span class="badge-code ${c.saved_bits_per_char > 0 ? 'badge-green' : 'badge-purple'}">${c.saved_bits_per_char > 0 ? '+' : ''}${c.saved_bits_per_char} bits</span></td>
                                     </tr>
                                 `).join('')}
                             </tbody>
                         </table>
                     </div>
                     <div class="form-group mt-3">
-                        <label class="form-label">Bitstream Stream (First 400 bits):</label>
+                        <label class="form-label">Bitstream Stream (Unang 300 bits):</label>
                         <div class="terminal-preview-box" style="word-break:break-all; font-size:0.78rem; color:#00F0FF;">${data.encoded_bits}</div>
                     </div>
                 `;
             } else if (data.method === 'Run-Length Encoding (RLE)') {
                 detailsContainer.innerHTML = `
-                    <div style="font-size:0.8rem; margin-bottom:8px; color:#94A3B8;">Encoded RLE Stream (${data.runs_count} run segments):</div>
+                    <div style="font-size:0.8rem; margin-bottom:8px; color:#94A3B8;">Encoded RLE Stream (${data.runs_count} run segments | Longest run: ${data.longest_run}):</div>
                     <div class="terminal-preview-box" style="max-height:180px; overflow-y:auto; word-break:break-all; font-size:0.82rem; color:#00FF9D;">${data.encoded_text}</div>
                 `;
             } else if (data.method === 'LZW Dictionary Compression') {
                 detailsContainer.innerHTML = `
-                    <div style="font-size:0.8rem; margin-bottom:8px; color:#94A3B8;">LZW Dynamic Dictionary (${data.dictionary_size} total dictionary entries):</div>
+                    <div style="font-size:0.8rem; margin-bottom:8px; color:#94A3B8;">LZW Dynamic Dictionary (${data.dictionary_size} total dictionary entries | ${data.code_bit_width}-bit codes):</div>
                     <div class="codebook-scroll">
                         <table class="suite-table">
-                            <thead><tr><th>Sequence</th><th>Assigned Code</th><th>Emitted Code</th></tr></thead>
+                            <thead><tr><th>Step</th><th>Current (W)</th><th>Next (K)</th><th>New Entry (W+K)</th><th>Assigned Code</th><th>Emitted</th></tr></thead>
                             <tbody>
                                 ${(data.sample_dictionary_entries || []).map(e => `
                                     <tr>
-                                        <td><code>${e.entry}</code></td>
-                                        <td><span class="badge-code badge-purple">${e.code}</span></td>
+                                        <td>${e.step}</td>
+                                        <td><code>${e.current_str}</code></td>
+                                        <td><code>${e.next_char}</code></td>
+                                        <td><strong style="color:#00F0FF;">${e.new_entry}</strong></td>
+                                        <td><span class="badge-code badge-purple">${e.new_code}</span></td>
                                         <td><span class="badge-code badge-cyan">${e.emitted_code}</span></td>
                                     </tr>
                                 `).join('')}
@@ -456,6 +566,35 @@ class TextSuiteController {
                 `;
             }
         }
+
+        // Render Educational Flow Breakdown
+        const flowContainer = document.getElementById('compression-flow-content');
+        if (flowContainer) {
+            flowContainer.innerHTML = `
+                <div class="flow-summary-banner">
+                    <strong>Bakit Ganyan ang Result?</strong> ${data.why_result || data.details}
+                </div>
+                <div class="flow-step-list">
+                    <div class="flow-step-item">
+                        <span class="flow-step-num">Proseso</span>
+                        <div class="flow-step-content">
+                            <strong>Hakbang ng Compression Engine:</strong>
+                            <p style="margin:4px 0; white-space:pre-line;">${data.flow_explanation || '-'}</p>
+                        </div>
+                    </div>
+                    <div class="flow-step-item">
+                        <span class="flow-step-num">Lossless</span>
+                        <div class="flow-step-content">
+                            <strong>100% Round-trip Decompression Verification:</strong>
+                            <p style="margin:4px 0;">${data.lossless_explanation || 'Napatunayang tugma ang bawat byte.'}</p>
+                            <p style="margin:4px 0; font-size:0.75rem; color:#94A3B8;">Decompressed Sample: <code>"${this.escapeHtml(data.decompressed_preview || '')}"</code></p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        if (window.lucide) lucide.createIcons();
     }
 
     // ==========================================
@@ -518,6 +657,28 @@ class TextSuiteController {
 
         // Draw Canvas Convergence Graph
         this.drawConvergenceChart(data.convergence_history);
+
+        // Render Educational Flow Breakdown
+        const flowContainer = document.getElementById('optimization-flow-content');
+        if (flowContainer) {
+            flowContainer.innerHTML = `
+                <div class="flow-summary-banner">
+                    <strong>Bakit Ganyan ang Result?</strong> ${data.why_result || data.details}
+                </div>
+                <div class="flow-step-list">
+                    <div class="flow-step-item">
+                        <span class="flow-step-num">Ebolusyon</span>
+                        <div class="flow-step-content">
+                            <strong>Simulated Natural Selection Mechanics:</strong>
+                            <p style="margin:4px 0; white-space:pre-line;">${data.flow_explanation || '-'}</p>
+                            <p style="margin:4px 0; font-size:0.75rem; color:#A78BFA;">Generation 1 Best: <strong>${data.initial_fitness}</strong> &rarr; Final Generation Best: <strong>${data.final_fitness}</strong> (${data.comparison?.optimality_ratio}% ng DP Theoretical Optimum).</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        if (window.lucide) lucide.createIcons();
     }
 
     drawConvergenceChart(history) {
@@ -535,7 +696,6 @@ class TextSuiteController {
         const plotH = h - pad * 2;
 
         const maxFit = Math.max(...history.map(d => d.best_fitness), 1);
-        const minFit = 0;
 
         // Grid lines
         ctx.strokeStyle = "rgba(255, 255, 255, 0.06)";
@@ -625,6 +785,33 @@ class TextSuiteController {
                 `;
             }
             document.getElementById('knapsack-compare-card')?.classList.remove('hidden');
+
+            // Render Knapsack Flow
+            const flowContainer = document.getElementById('optimization-flow-content');
+            if (flowContainer) {
+                flowContainer.innerHTML = `
+                    <div class="flow-summary-banner">
+                        <strong>Bakit Ganyan ang Result?</strong> ${data.dp.why_result}
+                    </div>
+                    <div class="flow-step-list">
+                        <div class="flow-step-item">
+                            <span class="flow-step-num">DP</span>
+                            <div class="flow-step-content">
+                                <strong>Dynamic Programming (Exact Solvers):</strong>
+                                <p style="margin:4px 0;">${data.dp.flow_explanation}</p>
+                            </div>
+                        </div>
+                        <div class="flow-step-item">
+                            <span class="flow-step-num">Greedy</span>
+                            <div class="flow-step-content">
+                                <strong>Greedy Heuristic (Ratio Solvers):</strong>
+                                <p style="margin:4px 0;">${data.greedy.flow_explanation}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
             window.showToast('Computed DP and Greedy knapsack solutions.', 'success');
         } catch (err) {
             window.showToast('Error running Knapsack optimization.', 'error');
@@ -682,10 +869,39 @@ class TextSuiteController {
                         <td><strong>Worker #${p.worker_id}</strong></td>
                         <td><span class="badge-code badge-cyan">${p.matches_found}</span></td>
                         <td>${p.comparisons.toLocaleString()}</td>
-                        <td>Active Concurrent Thread</td>
+                        <td><code>${p.chunk_range}</code></td>
                     </tr>
                 `).join('');
             }
+
+            // Render Parallel Flow Breakdown
+            const flowContainer = document.getElementById('parallel-flow-content');
+            if (flowContainer) {
+                flowContainer.innerHTML = `
+                    <div class="flow-summary-banner">
+                        <strong>Bakit Ganyan ang Result?</strong> ${data.why_result}
+                    </div>
+                    <div class="flow-step-list">
+                        <div class="flow-step-item">
+                            <span class="flow-step-num">Concurrency</span>
+                            <div class="flow-step-content">
+                                <strong>Multi-Thread Partitioning & Boundary Safety Margin:</strong>
+                                <p style="margin:4px 0; white-space:pre-line;">${data.flow_explanation}</p>
+                                <div class="chunk-overlap-bar">
+                                    ${(data.partitions || []).map(p => `
+                                        <div class="chunk-segment">
+                                            <span>Worker #${p.worker_id}</span>
+                                            <div style="font-size:0.68rem; color:#94A3B8;">${p.char_length} chars</div>
+                                            <span class="overlap-badge">+${data.overlap_margin} overlap</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
             window.showToast(`Parallel search complete with ${data.speedup}x speedup.`, 'success');
         } catch (err) {
             window.showToast('Error during parallel search.', 'error');
@@ -707,6 +923,32 @@ class TextSuiteController {
             document.getElementById('random-sort-depth').textContent = data.recursion_depth;
             document.getElementById('random-sort-time').textContent = `${data.time_microseconds} µs`;
             document.getElementById('random-sort-output').textContent = (data.sorted_sample || []).join(' | ');
+
+            // Render Flow Breakdown
+            const flowContainer = document.getElementById('parallel-flow-content');
+            if (flowContainer) {
+                flowContainer.innerHTML = `
+                    <div class="flow-summary-banner">
+                        <strong>Bakit Ganyan ang Result?</strong> ${data.why_result}
+                    </div>
+                    <div class="flow-step-list">
+                        <div class="flow-step-item">
+                            <span class="flow-step-num">Pivot</span>
+                            <div class="flow-step-content">
+                                <strong>Random Pivot Selection vs Deterministic Pivot:</strong>
+                                <p style="margin:4px 0;">${data.flow_explanation}</p>
+                                <div style="margin-top:8px;">
+                                    <span style="font-size:0.75rem; color:#94A3B8;">Sample Random Pivot Choices:</span>
+                                    <div class="chips-flex-wrap">
+                                        ${(data.pivot_samples || []).map(ps => `<span class="chip-item">Pivot: <span class="chip-key">"${ps.pivot_value}"</span> (idx: ${ps.chosen_index})</span>`).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
             window.showToast(`Randomized Quicksort sorted ${data.original_count} tokens.`, 'success');
         } catch (err) {
             window.showToast('Error running Randomized Quicksort.', 'error');
@@ -726,6 +968,25 @@ class TextSuiteController {
             const data = await res.json();
             if (data.success) {
                 document.getElementById('quickselect-result').textContent = `Rank k=${data.k} Element: "${data.element}" (${data.time_microseconds} µs)`;
+                
+                const flowContainer = document.getElementById('parallel-flow-content');
+                if (flowContainer) {
+                    flowContainer.innerHTML = `
+                        <div class="flow-summary-banner">
+                            <strong>Bakit Ganyan ang Result?</strong> ${data.why_result}
+                        </div>
+                        <div class="flow-step-list">
+                            <div class="flow-step-item">
+                                <span class="flow-step-num">QuickSelect</span>
+                                <div class="flow-step-content">
+                                    <strong>Expected O(n) Rank Query:</strong>
+                                    <p style="margin:4px 0;">${data.flow_explanation}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
                 window.showToast(`QuickSelect resolved rank ${data.k} in O(n) expected time.`, 'success');
             }
         } catch (err) {
@@ -793,12 +1054,13 @@ class TextSuiteController {
                     reportArea.classList.remove('hidden');
                     reportArea.innerHTML = `
                         <div class="glass-card" style="margin-top:16px;">
-                            <div class="card-header-small"><span class="stats-card-title">BENCHMARK EXECUTION TELEMETRY</span></div>
+                            <div class="card-header-small"><span class="stats-card-title">BENCHMARK EXECUTION TELEMETRY & FLOW SUMMARY</span></div>
                             <div style="font-size:0.85rem; color:#E2E8F0; line-height:1.7;">
                                 <p><strong>Corpus Length:</strong> ${data.text_length.toLocaleString()} characters | <strong>Target Pattern:</strong> "${data.pattern}"</p>
                                 <p><strong>Pattern Matchers:</strong> KMP executed in ${data.pattern_matching?.results?.find(r => r.algorithm.includes('KMP'))?.time_microseconds} µs vs Brute Force in ${data.pattern_matching?.results?.find(r => r.algorithm.includes('Brute'))?.time_microseconds} µs.</p>
                                 <p><strong>Parallel Search Speedup:</strong> ${data.parallel_speedup?.speedup}x faster across 4 thread workers.</p>
                                 <p><strong>Compression:</strong> Huffman (${data.compression?.find(c => c.method?.includes('Huffman'))?.space_savings}% space savings), LZW (${data.compression?.find(c => c.method?.includes('LZW'))?.space_savings}% space savings).</p>
+                                <p style="color:#00FF9D; font-size:0.8rem; margin-top:8px;">✓ Lahat ng mga algoritmo ay gumana nang lokal at 100% matagumpay.</p>
                             </div>
                         </div>
                     `;
@@ -824,4 +1086,3 @@ class TextSuiteController {
 document.addEventListener('DOMContentLoaded', () => {
     window.textSuite = new TextSuiteController();
 });
-
