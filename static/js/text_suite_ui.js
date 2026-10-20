@@ -584,6 +584,12 @@ class TextSuiteController {
     bindCompressionEvents() {
         document.getElementById('btn-run-compression')?.addEventListener('click', () => this.executeCompression());
         document.getElementById('btn-compress-compare-all')?.addEventListener('click', () => this.executeCompressionCompareAll());
+        document.getElementById('select-comp-method')?.addEventListener('change', () => this.executeCompression());
+        document.getElementById('nav-compression')?.addEventListener('click', () => {
+            if (!this.lastResults.compression && !this.lastResults.compressionComparison) {
+                setTimeout(() => this.executeCompression(), 120);
+            }
+        });
     }
 
     async executeCompression() {
@@ -610,8 +616,9 @@ class TextSuiteController {
                 return;
             }
 
+            document.getElementById('comp-compare-all-card')?.classList.add('hidden');
             this.renderCompressionStats(data);
-            window.showToast(`${method} compression completed. Lossless: ${data.is_lossless}`, 'success');
+            window.showToast(`${data.method || method} compression completed. Lossless: ${data.is_lossless}`, 'success');
         } catch (err) {
             window.showToast('Error during compression.', 'error');
         }
@@ -709,16 +716,26 @@ class TextSuiteController {
         // Render Codebook / Dictionary / Encoded stream
         const detailsContainer = document.getElementById('comp-method-details');
         if (detailsContainer) {
-            if (data.method === 'Huffman' && data.codebook) {
+            const isHuffman = data.method && (data.method.includes('Huffman') || data.method === 'Huffman');
+            const isRLE = data.method && (data.method.includes('Run-Length') || data.method.includes('RLE'));
+            const isLZW = data.method && (data.method.includes('LZW'));
+
+            if (isHuffman && data.codebook) {
                 detailsContainer.innerHTML = `
-                    <div style="font-size:0.8rem; margin-bottom:8px; color:#94A3B8;">${ui?.codebook_lbl || 'Huffman Codebook'} (${data.codebook.length} unique prefix symbols):</div>
-                    <div class="codebook-scroll">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span style="font-size:0.8rem; font-weight:600; color:#00F0FF;">
+                            ${ui?.codebook_lbl || 'Huffman Codebook Table'} (${data.codebook.length} unique symbols):
+                        </span>
+                        <span class="badge-code badge-cyan">${data.compressed_bytes} bytes (${data.total_bits} bits)</span>
+                    </div>
+
+                    <div class="codebook-scroll" style="max-height:170px;">
                         <table class="suite-table">
                             <thead><tr><th>Character</th><th>Frequency</th><th>Prefix Bitcode</th><th>Bits</th><th>Bit Savings</th></tr></thead>
                             <tbody>
-                                ${data.codebook.slice(0, 30).map(c => `
+                                ${data.codebook.map(c => `
                                     <tr>
-                                        <td><code>${c.char === ' ' ? '[space]' : c.char}</code></td>
+                                        <td><code>${c.char === ' ' ? '[space]' : (c.char === '\n' ? '[newline]' : c.char)}</code></td>
                                         <td>${c.freq}</td>
                                         <td><code class="badge-code badge-cyan">${c.code}</code></td>
                                         <td>${c.bits}</td>
@@ -728,29 +745,77 @@ class TextSuiteController {
                             </tbody>
                         </table>
                     </div>
+
                     <div class="form-group mt-3">
-                        <label class="form-label">Bitstream Stream (First 300 bits):</label>
-                        <div class="terminal-preview-box" style="word-break:break-all; font-size:0.78rem; color:#00F0FF;">${data.encoded_bits}</div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <label class="form-label" style="margin:0;">Compressed Binary Bitstream (${data.total_bits} bits):</label>
+                            <button id="btn-copy-bitstream" class="btn btn-dark-outline btn-sm" style="font-size:0.72rem; padding:2px 8px;">
+                                📋 Copy Bitstream
+                            </button>
+                        </div>
+                        <div class="terminal-preview-box" style="word-break:break-all; font-size:0.78rem; color:#00F0FF; max-height:100px; overflow-y:auto;">${data.encoded_bits}</div>
+                    </div>
+
+                    <div class="form-group mt-2">
+                        <label class="form-label" style="margin-bottom:4px; font-size:0.75rem; color:#94A3B8;">100% Lossless Round-Trip Decompressed Preview:</label>
+                        <div class="terminal-preview-box" style="font-size:0.78rem; color:#00FF9D; max-height:70px; overflow-y:auto;">${this.escapeHtml(data.decompressed_preview || '')}</div>
                     </div>
                 `;
-            } else if (data.method === 'Run-Length Encoding (RLE)') {
+
+                document.getElementById('btn-copy-bitstream')?.addEventListener('click', () => {
+                    navigator.clipboard.writeText(data.encoded_bits || '');
+                    window.showToast?.('Copied full Huffman bitstream to clipboard!', 'success');
+                });
+
+            } else if (isRLE) {
                 detailsContainer.innerHTML = `
-                    <div style="font-size:0.8rem; margin-bottom:8px; color:#94A3B8;">Encoded RLE Stream (${data.runs_count} ${ui?.runs_lbl || 'run segments'} | Longest run: ${data.longest_run}):</div>
-                    <div class="terminal-preview-box" style="max-height:180px; overflow-y:auto; word-break:break-all; font-size:0.82rem; color:#00FF9D;">${data.encoded_text}</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span style="font-size:0.8rem; font-weight:600; color:#00FF9D;">
+                            Encoded RLE Stream (${data.runs_count} ${ui?.runs_lbl || 'run segments'} | Longest run: ${data.longest_run}):
+                        </span>
+                        <span class="badge-code badge-green">${data.compressed_bytes} bytes</span>
+                    </div>
+
+                    <div class="form-group mt-2">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <label class="form-label" style="margin:0;">Compressed Output String [Count][Char]:</label>
+                            <button id="btn-copy-rle" class="btn btn-dark-outline btn-sm" style="font-size:0.72rem; padding:2px 8px;">
+                                📋 Copy Output
+                            </button>
+                        </div>
+                        <div class="terminal-preview-box" style="max-height:170px; overflow-y:auto; word-break:break-all; font-size:0.82rem; color:#00FF9D;">${this.escapeHtml(data.encoded_text || '')}</div>
+                    </div>
+
+                    <div class="form-group mt-2">
+                        <label class="form-label" style="margin-bottom:4px; font-size:0.75rem; color:#94A3B8;">100% Lossless Round-Trip Decompressed Preview:</label>
+                        <div class="terminal-preview-box" style="font-size:0.78rem; color:#00FF9D; max-height:70px; overflow-y:auto;">${this.escapeHtml(data.decompressed_preview || '')}</div>
+                    </div>
                 `;
-            } else if (data.method === 'LZW Dictionary Compression') {
+
+                document.getElementById('btn-copy-rle')?.addEventListener('click', () => {
+                    navigator.clipboard.writeText(data.encoded_text || '');
+                    window.showToast?.('Copied RLE compressed stream to clipboard!', 'success');
+                });
+
+            } else if (isLZW) {
                 detailsContainer.innerHTML = `
-                    <div style="font-size:0.8rem; margin-bottom:8px; color:#94A3B8;">LZW ${ui?.dictionary_lbl || 'Dynamic Dictionary'} (${data.dictionary_size} total dictionary entries | ${data.code_bit_width}-bit codes):</div>
-                    <div class="codebook-scroll">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span style="font-size:0.8rem; font-weight:600; color:#A78BFA;">
+                            LZW ${ui?.dictionary_lbl || 'Dynamic Dictionary'} (${data.dictionary_size} entries | ${data.code_bit_width}-bit codes):
+                        </span>
+                        <span class="badge-code badge-purple">${data.compressed_bytes} bytes</span>
+                    </div>
+
+                    <div class="codebook-scroll" style="max-height:160px;">
                         <table class="suite-table">
                             <thead><tr><th>Step</th><th>Current (W)</th><th>Next (K)</th><th>New Entry (W+K)</th><th>Assigned Code</th><th>Emitted</th></tr></thead>
                             <tbody>
                                 ${(data.sample_dictionary_entries || []).map(e => `
                                     <tr>
                                         <td>${e.step}</td>
-                                        <td><code>${e.current_str}</code></td>
-                                        <td><code>${e.next_char}</code></td>
-                                        <td><strong style="color:#00F0FF;">${e.new_entry}</strong></td>
+                                        <td><code>${this.escapeHtml(e.current_str)}</code></td>
+                                        <td><code>${this.escapeHtml(e.next_char)}</code></td>
+                                        <td><strong style="color:#00F0FF;">${this.escapeHtml(e.new_entry)}</strong></td>
                                         <td><span class="badge-code badge-purple">${e.new_code}</span></td>
                                         <td><span class="badge-code badge-cyan">${e.emitted_code}</span></td>
                                     </tr>
@@ -758,11 +823,27 @@ class TextSuiteController {
                             </tbody>
                         </table>
                     </div>
+
                     <div class="form-group mt-3">
-                        <label class="form-label">First 50 Emitted LZW Integer Codes:</label>
-                        <div class="terminal-preview-box" style="font-size:0.8rem; color:#A78BFA;">${(data.codes || []).slice(0, 50).join(', ')}</div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <label class="form-label" style="margin:0;">Emitted LZW Integer Token Codes (${(data.codes || []).length} total codes):</label>
+                            <button id="btn-copy-lzw" class="btn btn-dark-outline btn-sm" style="font-size:0.72rem; padding:2px 8px;">
+                                📋 Copy Codes
+                            </button>
+                        </div>
+                        <div class="terminal-preview-box" style="font-size:0.8rem; color:#A78BFA; max-height:85px; overflow-y:auto; word-break:break-all;">${(data.codes || []).join(', ')}</div>
+                    </div>
+
+                    <div class="form-group mt-2">
+                        <label class="form-label" style="margin-bottom:4px; font-size:0.75rem; color:#94A3B8;">100% Lossless Round-Trip Decompressed Preview:</label>
+                        <div class="terminal-preview-box" style="font-size:0.78rem; color:#00FF9D; max-height:70px; overflow-y:auto;">${this.escapeHtml(data.decompressed_preview || '')}</div>
                     </div>
                 `;
+
+                document.getElementById('btn-copy-lzw')?.addEventListener('click', () => {
+                    navigator.clipboard.writeText((data.codes || []).join(', '));
+                    window.showToast?.('Copied LZW codes to clipboard!', 'success');
+                });
             }
         }
 

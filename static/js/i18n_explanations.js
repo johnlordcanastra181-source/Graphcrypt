@@ -604,3 +604,4 @@ window.setLanguage = function(langCode) {
     // Dispatch global event for views to re-render explanations
     window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang: langCode } }));
 };
+

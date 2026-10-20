@@ -1506,7 +1506,12 @@ html, body {
     transition: opacity 0.2s ease;
 }
 
+.hidden {
+    display: none !important;
+}
+
 .modal-backdrop.hidden {
+    display: none !important;
     opacity: 0;
     pointer-events: none;
 }
