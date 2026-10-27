@@ -937,6 +937,136 @@ html, body {
 }
 
 /* ==========================================================================
+   LITERAL FIRE PATHFINDING FLAMES & SOARING PHOENIX
+   ========================================================================== */
+
+/* Literal Fire Flames along Path Edges */
+.edge-literal-flames {
+    pointer-events: none;
+}
+
+.literal-flame-tongue {
+    fill: url(#phoenix-flame-tongue-gradient);
+    filter: drop-shadow(0 0 5px #FF9D00) drop-shadow(0 0 10px #FF3700);
+    transform-origin: bottom center;
+    animation: literalFlameLick 0.35s ease-in-out infinite alternate;
+    pointer-events: none;
+}
+
+.literal-flame-tongue:nth-child(2n) {
+    animation-duration: 0.28s;
+    animation-delay: -0.12s;
+}
+
+.literal-flame-tongue:nth-child(3n) {
+    animation-duration: 0.42s;
+    animation-delay: -0.25s;
+}
+
+.literal-flame-tongue-core {
+    fill: #FFF9C4;
+    filter: drop-shadow(0 0 4px #FFFFFF);
+    pointer-events: none;
+}
+
+@keyframes literalFlameLick {
+    0% {
+        transform: scaleY(0.8) scaleX(0.9) skewX(-4deg);
+        opacity: 0.82;
+    }
+    50% {
+        transform: scaleY(1.3) scaleX(1.15) skewX(5deg);
+        opacity: 1;
+    }
+    100% {
+        transform: scaleY(0.95) scaleX(0.95) skewX(-2deg);
+        opacity: 0.88;
+    }
+}
+
+/* Flaming Phoenix Soaring Body & Swinging Wings */
+.phoenix-container {
+    pointer-events: none;
+    mix-blend-mode: screen;
+}
+
+.phoenix-body-group {
+    filter: drop-shadow(0 0 6px #FFE033) drop-shadow(0 0 16px #FF5500) drop-shadow(0 0 28px #D50000);
+}
+
+.phoenix-body-feather {
+    fill: url(#phoenix-body-gradient);
+    stroke: #FFE57F;
+    stroke-width: 1.4px;
+    stroke-linejoin: round;
+}
+
+.phoenix-crest-feather {
+    fill: url(#phoenix-crest-gradient);
+    stroke: #FFA000;
+    stroke-width: 1.1px;
+    filter: drop-shadow(0 0 4px #FF5500);
+}
+
+.phoenix-beak {
+    fill: #FFE033;
+    stroke: #E65100;
+    stroke-width: 1.2px;
+}
+
+.phoenix-eye {
+    fill: #FFFFFF;
+    stroke: #FFD54F;
+    stroke-width: 0.8px;
+    filter: drop-shadow(0 0 6px #FFFF00);
+}
+
+.phoenix-wing-group {
+    transform-origin: 0 0;
+    filter: drop-shadow(0 0 6px #FFE033) drop-shadow(0 0 16px #FF5500) drop-shadow(0 0 28px #D50000);
+}
+
+.phoenix-wing-feather {
+    fill: url(#phoenix-wing-gradient);
+    stroke: #FFA000;
+    stroke-width: 1.3px;
+    stroke-linejoin: round;
+}
+
+.phoenix-wing-strut {
+    fill: none;
+    stroke: #FFE57F;
+    stroke-width: 1.8px;
+    stroke-linecap: round;
+    opacity: 0.85;
+}
+
+.phoenix-tail-streamer {
+    fill: none;
+    stroke: url(#phoenix-tail-gradient);
+    stroke-linecap: round;
+    opacity: 0.92;
+    filter: drop-shadow(0 0 6px #FF5500) drop-shadow(0 0 14px #CC0000);
+}
+
+.phoenix-tail-gem {
+    fill: #FFE033;
+    stroke: #FF3700;
+    stroke-width: 1px;
+    filter: drop-shadow(0 0 5px #FF5500);
+}
+
+.phoenix-vortex-spark {
+    pointer-events: none;
+    mix-blend-mode: screen;
+}
+
+.phoenix-rebirth-spark {
+    pointer-events: none;
+    mix-blend-mode: screen;
+}
+
+/* ==========================================================================
    A* CONTROL PANEL (RIGHT COLUMN)
    ========================================================================== */
 .astar-control-panel {
