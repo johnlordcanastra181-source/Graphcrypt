@@ -893,6 +893,39 @@ html, body {
     filter: drop-shadow(0 0 4px #FF3700);
 }
 
+/* Fiery Dragon Flapping Wings */
+.dragon-wing-group {
+    transform-origin: 0 0;
+    filter: drop-shadow(0 0 5px #FFE033) drop-shadow(0 0 12px #FF5500) drop-shadow(0 0 22px #D50000);
+}
+
+.dragon-wing-membrane {
+    fill: url(#dragon-wing-gradient);
+    stroke: #FFA000;
+    stroke-width: 1.4px;
+    stroke-linejoin: round;
+}
+
+.dragon-wing-bone {
+    fill: none;
+    stroke: url(#dragon-wing-bone-gradient);
+    stroke-width: 2.2px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 4px #FF6A00);
+}
+
+.dragon-wing-claw {
+    fill: #FFE033;
+    stroke: #D84315;
+    stroke-width: 1px;
+}
+
+.dragon-wingtip-spark {
+    pointer-events: none;
+    mix-blend-mode: screen;
+}
+
 .dragon-burst-spark {
     pointer-events: none;
     mix-blend-mode: screen;

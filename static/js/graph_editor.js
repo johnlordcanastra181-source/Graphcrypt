@@ -782,6 +782,11 @@ class GraphEditor {
         const clawsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         dragonRoot.appendChild(clawsLayer);
 
+        // Flapping Fiery Dragon Wings Layer
+        const wingsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        wingsLayer.setAttribute('class', 'dragon-wings-layer');
+        dragonRoot.appendChild(wingsLayer);
+
         // Articulated Body Segments & Spine Fins
         const bodyLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         dragonRoot.appendChild(bodyLayer);
@@ -900,6 +905,75 @@ class GraphEditor {
             legElements.push({ ...leg, el: path });
         }
 
+        // --- Build Flapping Fiery Dragon Wings ---
+        function createWing(side) {
+            const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            g.setAttribute('class', 'dragon-wing-group');
+
+            // 1. Fiery Wing Membrane (scalloped wyvern wing webbing)
+            const membrane = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const y1 = side * 18;
+            const y2 = side * 46;
+            const y3 = side * 40;
+            const y4 = side * 28;
+            const y5 = side * 12;
+
+            membrane.setAttribute('d', `M 0,0 L 4,${y1} L -8,${y2} Q -16,${side * 42} -20,${y3} Q -25,${side * 34} -28,${y4} Q -26,${side * 20} -22,${y5} Q -12,${side * 6} 0,0 Z`);
+            membrane.setAttribute('class', 'dragon-wing-membrane');
+            g.appendChild(membrane);
+
+            // 2. Wing Arm Bones & Radiating Struts
+            const mainArm = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            mainArm.setAttribute('d', `M 0,0 L 4,${y1} L -8,${y2}`);
+            mainArm.setAttribute('class', 'dragon-wing-bone');
+            g.appendChild(mainArm);
+
+            const strut2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            strut2.setAttribute('d', `M 4,${y1} Q -10,${side * 28} -20,${y3}`);
+            strut2.setAttribute('class', 'dragon-wing-bone');
+            strut2.style.strokeWidth = '1.6px';
+            g.appendChild(strut2);
+
+            const strut3 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            strut3.setAttribute('d', `M 4,${y1} Q -12,${side * 22} -28,${y4}`);
+            strut3.setAttribute('class', 'dragon-wing-bone');
+            strut3.style.strokeWidth = '1.4px';
+            g.appendChild(strut3);
+
+            // 3. Thumb Claw at Knuckle
+            const claw = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            claw.setAttribute('points', `4,${y1} 6,${side * (Math.abs(y1) + 4)} 2,${side * (Math.abs(y1) + 2)}`);
+            claw.setAttribute('class', 'dragon-wing-claw');
+            g.appendChild(claw);
+
+            return { group: g, side: side };
+        }
+
+        const leftWing = createWing(-1);
+        const rightWing = createWing(1);
+        wingsLayer.appendChild(leftWing.group);
+        wingsLayer.appendChild(rightWing.group);
+
+        // 16 Wingtip Vortex Fire Sparks (8 per wing) trailing off the tips during flight
+        const wingSparks = [];
+        for (let i = 0; i < 16; i++) {
+            const wsp = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            const isLeft = i < 8;
+            const wcolor = i % 2 === 0 ? '#FFE033' : '#FF5500';
+            wsp.setAttribute('fill', wcolor);
+            wsp.setAttribute('class', 'dragon-wingtip-spark');
+            wsp.style.filter = `drop-shadow(0 0 4px ${wcolor})`;
+            trailLayer.appendChild(wsp);
+
+            wingSparks.push({
+                el: wsp,
+                isLeft: isLeft,
+                lifeOffset: (i % 8) / 8,
+                driftSpeed: 30 + (i % 4) * 15,
+                radius: 1.6 + (i % 3) * 0.7
+            });
+        }
+
         // --- Build Wake Trail Embers (36 particles) ---
         const trailSparks = [];
         const sparkColors = ['#FFFFFF', '#FFF7C2', '#FFE033', '#FF9D00', '#FF5500', '#FF1A00'];
@@ -1013,6 +1087,8 @@ class GraphEditor {
                 bodySegments[i].curNx = sPt.nx;
                 bodySegments[i].curNy = sPt.ny;
                 bodySegments[i].curOpacity = bOpacity;
+                bodySegments[i].curBDeg = bDeg;
+                bodySegments[i].curBAngle = bAngle;
             }
 
             // --- C. Update Running Dragon Claws (4 legs) ---
@@ -1036,7 +1112,51 @@ class GraphEditor {
                 leg.el.setAttribute('opacity', (segData.curOpacity * 0.9).toFixed(2));
             }
 
-            // --- D. Update Wake Trail Embers ---
+            // --- D. Update Fiery Flapping Dragon Wings & Wingtip Vortex Sparks ---
+            const shoulderSeg = bodySegments[2];
+            if (shoulderSeg && leftWing && rightWing) {
+                const sx = shoulderSeg.curX;
+                const sy = shoulderSeg.curY;
+                const bDeg = shoulderSeg.curBDeg;
+                const bAngle = shoulderSeg.curBAngle;
+                const bOpacity = shoulderSeg.curOpacity;
+
+                // Wing flapping kinematics
+                const wingFlapPhase = timestamp * 0.010;
+                const flapAngle = Math.sin(wingFlapPhase) * 26; // degrees rotation
+                const flapScale = 0.55 + 0.45 * Math.cos(wingFlapPhase); // foreshortening
+
+                leftWing.group.setAttribute('transform', `translate(${sx.toFixed(2)}, ${sy.toFixed(2)}) rotate(${bDeg}) rotate(${flapAngle.toFixed(2)}) scale(1, ${flapScale.toFixed(2)})`);
+                leftWing.group.setAttribute('opacity', bOpacity.toFixed(2));
+
+                rightWing.group.setAttribute('transform', `translate(${sx.toFixed(2)}, ${sy.toFixed(2)}) rotate(${bDeg}) rotate(${(-flapAngle).toFixed(2)}) scale(1, ${(-flapScale).toFixed(2)})`);
+                rightWing.group.setAttribute('opacity', bOpacity.toFixed(2));
+
+                // Wingtip vortex fire sparks
+                const cosA = Math.cos(bAngle);
+                const sinA = Math.sin(bAngle);
+                const tipLX = sx + cosA * (-8) - sinA * (-46 * flapScale);
+                const tipLY = sy + sinA * (-8) + cosA * (-46 * flapScale);
+                const tipRX = sx + cosA * (-8) - sinA * (46 * flapScale);
+                const tipRY = sy + sinA * (-8) + cosA * (46 * flapScale);
+
+                for (const wsp of wingSparks) {
+                    const tipX = wsp.isLeft ? tipLX : tipRX;
+                    const tipY = wsp.isLeft ? tipLY : tipRY;
+                    const tNorm = ((timestamp * 0.002 + wsp.lifeOffset) % 1);
+                    const lagDist = tNorm * 36;
+                    const wx = tipX - cosA * lagDist + Math.sin(timestamp * 0.015 + wsp.lifeOffset * 6) * 3;
+                    const wy = tipY - sinA * lagDist + Math.cos(timestamp * 0.015 + wsp.lifeOffset * 6) * 3;
+                    const wop = Math.max(0, (1 - tNorm) * bOpacity);
+
+                    wsp.el.setAttribute('cx', wx.toFixed(2));
+                    wsp.el.setAttribute('cy', wy.toFixed(2));
+                    wsp.el.setAttribute('r', (wsp.radius * (1 - tNorm * 0.4)).toFixed(2));
+                    wsp.el.setAttribute('opacity', wop.toFixed(2));
+                }
+            }
+
+            // --- E. Update Wake Trail Embers ---
             const maxTrailOffset = numSegments * segSpacing + 80;
             for (const spark of trailSparks) {
                 const eDist = headDist - spark.distOffset;
