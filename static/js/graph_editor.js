@@ -33,6 +33,7 @@ class GraphEditor {
         this.lastPathNodes = [];
         this.sparks = [];
         this.sparkAnimId = null;
+        this.dragonAnimId = null;
         this.sparkSegments = [];
         this.sparkTotalLength = 0;
 
@@ -388,7 +389,7 @@ class GraphEditor {
     render() {
         this.renderEdges();
         this.renderNodes();
-        if (this.lastPathNodes && this.lastPathNodes.length >= 2 && this.sparkAnimId) {
+        if (this.lastPathNodes && this.lastPathNodes.length >= 2 && (this.sparkAnimId || this.dragonAnimId)) {
             this.recalculateSparkSegments();
         }
     }
@@ -632,9 +633,9 @@ class GraphEditor {
         }
     }
 
-    // ==========================================
-    // BLAZING FIRE ROUTE FINDING VISUALIZATION
-    // ==========================================
+    // =========================================================================
+    // RUNNING FIRE DRAGON ROUTE FINDING VISUALIZATION
+    // =========================================================================
 
     setPathHighlights(pathNodes = [], pathEdges = [], visitedNodes = [], evaluatedEdges = [], currentNode = null) {
         this.pathNodeIds = new Set(pathNodes);
@@ -646,9 +647,9 @@ class GraphEditor {
         this.render();
 
         if (this.lastPathNodes.length >= 2) {
-            this.startBlazingFireParticles();
+            this.startBlazingFireDragon();
         } else {
-            this.stopBlazingFireParticles();
+            this.stopBlazingFireDragon();
         }
     }
 
@@ -659,7 +660,7 @@ class GraphEditor {
         this.evaluatedEdgeIds.clear();
         this.currentNodeId = null;
         this.lastPathNodes = [];
-        this.stopBlazingFireParticles();
+        this.stopBlazingFireDragon();
         this.render();
     }
 
@@ -696,6 +697,7 @@ class GraphEditor {
                 len,
                 nx: -dy / len,
                 ny: dx / len,
+                angle: Math.atan2(dy, dx),
                 startDist: totalLen,
                 endDist: totalLen + len
             });
@@ -706,90 +708,390 @@ class GraphEditor {
         this.sparkTotalLength = totalLen;
     }
 
-    startBlazingFireParticles() {
-        this.stopBlazingFireParticles();
+    getPointOnPath(dist) {
+        const segs = this.sparkSegments;
+        if (!segs || segs.length === 0) {
+            return { x: 0, y: 0, angle: 0, nx: 0, ny: 1 };
+        }
+
+        const total = this.sparkTotalLength;
+        if (dist <= 0) {
+            const seg = segs[0];
+            const t = dist / seg.len;
+            return {
+                x: seg.p1.x + seg.dx * t,
+                y: seg.p1.y + seg.dy * t,
+                angle: seg.angle,
+                nx: seg.nx,
+                ny: seg.ny
+            };
+        }
+
+        if (dist >= total) {
+            const seg = segs[segs.length - 1];
+            const over = dist - total;
+            const dirX = seg.dx / seg.len;
+            const dirY = seg.dy / seg.len;
+            return {
+                x: seg.p2.x + dirX * over,
+                y: seg.p2.y + dirY * over,
+                angle: seg.angle,
+                nx: seg.nx,
+                ny: seg.ny
+            };
+        }
+
+        let seg = segs.find(s => dist >= s.startDist && dist <= s.endDist);
+        if (!seg) seg = segs[segs.length - 1];
+
+        const t = Math.max(0, Math.min(1, (dist - seg.startDist) / seg.len));
+        return {
+            x: seg.p1.x + seg.dx * t,
+            y: seg.p1.y + seg.dy * t,
+            angle: seg.angle,
+            nx: seg.nx,
+            ny: seg.ny
+        };
+    }
+
+    startBlazingFireDragon() {
+        this.stopBlazingFireDragon();
         this.recalculateSparkSegments();
 
         if (!this.animationLayer || this.sparkSegments.length === 0 || this.sparkTotalLength <= 0) {
             return;
         }
 
-        const sparkColors = ['#FFFFFF', '#FFF7C2', '#FFE033', '#FF9D00', '#FF5500', '#FF1A00'];
-        const sparkCount = Math.min(60, Math.max(28, Math.floor(this.sparkTotalLength / 22)));
-        this.sparks = [];
+        // ==========================================
+        // 1. ASSEMBLE DRAGON SVG HIERARCHY
+        // ==========================================
+        const dragonRoot = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        dragonRoot.setAttribute('class', 'dragon-container');
+        this.animationLayer.appendChild(dragonRoot);
 
-        for (let i = 0; i < sparkCount; i++) {
+        // Destination Supernova / Burst Layer
+        const burstLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        burstLayer.setAttribute('class', 'dragon-destination-burst');
+        dragonRoot.appendChild(burstLayer);
+
+        // Dragon Trail Embers Layer (behind dragon body)
+        const trailLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        dragonRoot.appendChild(trailLayer);
+
+        // Running Claws / Legs Layer
+        const clawsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        dragonRoot.appendChild(clawsLayer);
+
+        // Articulated Body Segments & Spine Fins
+        const bodyLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        dragonRoot.appendChild(bodyLayer);
+
+        // Dragon Head Group (front layer)
+        const headGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        headGroup.setAttribute('class', 'dragon-head-group');
+        dragonRoot.appendChild(headGroup);
+
+        // --- Build Dragon Head Features ---
+        // Flame breath shooting forward from snout (+X)
+        const flameBreath = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        flameBreath.setAttribute('points', '18,-5 36,-1 46,0 36,1 18,5 24,0');
+        flameBreath.setAttribute('class', 'dragon-flame-breath');
+        headGroup.appendChild(flameBreath);
+
+        // Upper & Lower Whisker Filaments
+        const whiskerTop = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        whiskerTop.setAttribute('d', 'M 8,-3 Q 0,-12 -16,-10 Q -24,-9 -32,-6');
+        whiskerTop.setAttribute('class', 'dragon-whisker');
+        headGroup.appendChild(whiskerTop);
+
+        const whiskerBottom = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        whiskerBottom.setAttribute('d', 'M 8,3 Q 0,12 -16,10 Q -24,9 -32,6');
+        whiskerBottom.setAttribute('class', 'dragon-whisker');
+        headGroup.appendChild(whiskerBottom);
+
+        // Dragon Horns
+        const hornUpper = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        hornUpper.setAttribute('d', 'M -4,-6 Q -12,-18 -24,-16 Q -15,-11 -4,-4 Z');
+        hornUpper.setAttribute('class', 'dragon-horn');
+        headGroup.appendChild(hornUpper);
+
+        const hornLower = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        hornLower.setAttribute('d', 'M -4,6 Q -12,18 -24,16 Q -15,11 -4,4 Z');
+        hornLower.setAttribute('class', 'dragon-horn');
+        headGroup.appendChild(hornLower);
+
+        // Brow Crest Spikes
+        const browSpikeTop = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        browSpikeTop.setAttribute('points', '-2,-8 -12,-12 -6,-6');
+        browSpikeTop.setAttribute('class', 'dragon-spine-fin');
+        headGroup.appendChild(browSpikeTop);
+
+        const browSpikeBottom = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        browSpikeBottom.setAttribute('points', '-2,8 -12,12 -6,6');
+        browSpikeBottom.setAttribute('class', 'dragon-spine-fin');
+        headGroup.appendChild(browSpikeBottom);
+
+        // Main Dragon Skull / Snout Shape
+        const skull = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        skull.setAttribute('d', 'M -8,-8 L 6,-7 L 16,-3 L 20,0 L 16,3 L 6,7 L -8,8 L -5,0 Z');
+        skull.setAttribute('class', 'dragon-head-skull');
+        headGroup.appendChild(skull);
+
+        // Golden Glowing Eyes
+        const eyeTop = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        eyeTop.setAttribute('cx', '7');
+        eyeTop.setAttribute('cy', '-3.8');
+        eyeTop.setAttribute('r', '2.2');
+        eyeTop.setAttribute('class', 'dragon-eye');
+        headGroup.appendChild(eyeTop);
+
+        const eyeBottom = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        eyeBottom.setAttribute('cx', '7');
+        eyeBottom.setAttribute('cy', '3.8');
+        eyeBottom.setAttribute('r', '2.2');
+        eyeBottom.setAttribute('class', 'dragon-eye');
+        headGroup.appendChild(eyeBottom);
+
+        // --- Build Body Segments (20 articulated segments) ---
+        const numSegments = 20;
+        const segSpacing = 11;
+        const bodySegments = [];
+
+        for (let i = 0; i < numSegments; i++) {
+            const segG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            bodyLayer.appendChild(segG);
+
+            const spineFin = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            spineFin.setAttribute('class', 'dragon-spine-fin');
+            segG.appendChild(spineFin);
+
             const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            const color = sparkColors[Math.floor(Math.random() * sparkColors.length)];
-            const radius = 2.0 + Math.random() * 3.6;
-            circle.setAttribute('r', radius.toFixed(1));
-            circle.setAttribute('fill', color);
-            circle.setAttribute('class', 'blazing-fire-spark');
-            circle.style.filter = `drop-shadow(0 0 ${2 + Math.random() * 4}px ${color})`;
-            this.animationLayer.appendChild(circle);
+            circle.setAttribute('class', 'dragon-body-segment');
+            segG.appendChild(circle);
 
-            this.sparks.push({
-                el: circle,
-                dist: (i / sparkCount) * this.sparkTotalLength + (Math.random() * 16 - 8),
-                speed: 130 + Math.random() * 140,
-                baseRadius: radius,
-                swayAmp: 2.5 + Math.random() * 4.5,
-                swayFreq: 0.004 + Math.random() * 0.005,
-                phase: Math.random() * Math.PI * 2,
-                color: color
+            const r = Math.max(3.2, 12.0 * (1.0 - (i / numSegments) * 0.72));
+            circle.setAttribute('r', r.toFixed(1));
+
+            const finHeight = r + 6.5;
+            spineFin.setAttribute('points', `-3,-${(r * 0.6).toFixed(1)} 0,-${finHeight.toFixed(1)} 3,-${(r * 0.6).toFixed(1)}`);
+
+            bodySegments.push({
+                group: segG,
+                circle: circle,
+                spineFin: spineFin,
+                radius: r,
+                index: i
             });
         }
 
+        // --- Build Running Claws (4 legs) ---
+        const legDefs = [
+            { segIndex: 4, side: -1, phase: 0 },
+            { segIndex: 4, side: 1, phase: Math.PI },
+            { segIndex: 12, side: -1, phase: Math.PI * 0.75 },
+            { segIndex: 12, side: 1, phase: Math.PI * 1.75 }
+        ];
+
+        const legElements = [];
+        for (const leg of legDefs) {
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('class', 'dragon-claw');
+            clawsLayer.appendChild(path);
+            legElements.push({ ...leg, el: path });
+        }
+
+        // --- Build Wake Trail Embers (36 particles) ---
+        const trailSparks = [];
+        const sparkColors = ['#FFFFFF', '#FFF7C2', '#FFE033', '#FF9D00', '#FF5500', '#FF1A00'];
+        for (let i = 0; i < 36; i++) {
+            const spark = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            const color = sparkColors[i % sparkColors.length];
+            spark.setAttribute('fill', color);
+            spark.setAttribute('class', 'blazing-fire-spark');
+            spark.style.filter = `drop-shadow(0 0 ${2 + (i % 4)}px ${color})`;
+            trailLayer.appendChild(spark);
+
+            trailSparks.push({
+                el: spark,
+                distOffset: (i / 36) * (numSegments * segSpacing + 80),
+                swayAmp: 3.0 + (i % 5) * 2.2,
+                swayFreq: 0.005 + (i % 3) * 0.002,
+                phase: (i * 1.1) % (Math.PI * 2),
+                baseRadius: 1.8 + (i % 4) * 0.8
+            });
+        }
+
+        // --- Build Destination Supernova Burst Sparks (24 particles) ---
+        const burstSparks = [];
+        for (let i = 0; i < 24; i++) {
+            const sp = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            sp.setAttribute('class', 'dragon-burst-spark');
+            sp.setAttribute('fill', i % 2 === 0 ? '#FFE033' : '#FF4500');
+            sp.style.filter = 'drop-shadow(0 0 6px #FF8800)';
+            sp.setAttribute('opacity', '0');
+            burstLayer.appendChild(sp);
+
+            const angle = (i / 24) * Math.PI * 2;
+            burstSparks.push({
+                el: sp,
+                angle: angle,
+                speed: 80 + (i % 4) * 40,
+                radius: 2.4 + (i % 3) * 0.8
+            });
+        }
+
+        // ==========================================
+        // 2. FIRE DRAGON KINEMATICS & FLIGHT LOOP
+        // ==========================================
+        let headDist = -60;
         let lastTime = performance.now();
+        let burstStartTime = -9999;
+        let burstTriggered = false;
+
+        const dragonSpeed = Math.max(260, Math.min(390, this.sparkTotalLength / 2.8));
+        const totalLen = this.sparkTotalLength;
+        const destNode = this.sparkSegments[this.sparkSegments.length - 1].p2;
+
         const animate = (timestamp) => {
             const dt = Math.min(0.08, (timestamp - lastTime) / 1000);
             lastTime = timestamp;
 
-            const total = this.sparkTotalLength;
-            if (total > 0 && this.sparkSegments.length > 0) {
-                for (let i = 0; i < this.sparks.length; i++) {
-                    const spark = this.sparks[i];
-                    spark.dist += spark.speed * dt;
-                    if (spark.dist > total) {
-                        spark.dist = spark.dist % total;
-                    } else if (spark.dist < 0) {
-                        spark.dist = 0;
-                    }
+            headDist += dragonSpeed * dt;
 
-                    // Locate active segment
-                    let seg = this.sparkSegments.find(s => spark.dist >= s.startDist && spark.dist <= s.endDist);
-                    if (!seg) seg = this.sparkSegments[this.sparkSegments.length - 1];
+            // Check destination collision / supernova burst
+            if (headDist >= totalLen - 20 && !burstTriggered) {
+                burstStartTime = timestamp;
+                burstTriggered = true;
+            }
 
-                    const segT = Math.max(0, Math.min(1, (spark.dist - seg.startDist) / seg.len));
-                    const baseX = seg.p1.x + seg.dx * segT;
-                    const baseY = seg.p1.y + seg.dy * segT;
+            // Loop smoothly back to Start node once full dragon has traversed
+            if (headDist > totalLen + 170) {
+                headDist = -240;
+                burstTriggered = false;
+            }
 
-                    // Lateral flame sway
-                    const sway = Math.sin(timestamp * spark.swayFreq + spark.phase) * spark.swayAmp;
-                    const posX = baseX + seg.nx * sway;
-                    const posY = baseY + seg.ny * sway;
+            // --- A. Update Dragon Head ---
+            const headPt = this.getPointOnPath(headDist);
+            const headSway = Math.sin(timestamp * 0.009) * 4.5;
+            const hX = headPt.x + headPt.nx * headSway;
+            const hY = headPt.y + headPt.ny * headSway;
+            const hAngle = headPt.angle + Math.cos(timestamp * 0.009) * 0.12;
+            const hDeg = (hAngle * 180 / Math.PI).toFixed(2);
 
-                    // Flame flicker opacity & pulsing radius
-                    const lifeT = spark.dist / total;
-                    const fade = Math.sin(lifeT * Math.PI);
-                    const flicker = 0.75 + 0.25 * Math.sin(timestamp * 0.02 + spark.phase);
-                    const opacity = Math.max(0.15, Math.min(1.0, fade * flicker * 1.3));
-                    const r = Math.max(1.2, spark.baseRadius * (0.85 + 0.35 * Math.sin(timestamp * 0.015 + spark.phase)));
+            let headOpacity = 1.0;
+            if (headDist < 0) {
+                headOpacity = Math.max(0, 1 + headDist / 60);
+            } else if (headDist > totalLen) {
+                headOpacity = Math.max(0, 1 - (headDist - totalLen) / 120);
+            }
 
-                    spark.el.setAttribute('cx', posX.toFixed(2));
-                    spark.el.setAttribute('cy', posY.toFixed(2));
-                    spark.el.setAttribute('r', r.toFixed(2));
-                    spark.el.setAttribute('opacity', opacity.toFixed(2));
+            headGroup.setAttribute('transform', `translate(${hX.toFixed(2)}, ${hY.toFixed(2)}) rotate(${hDeg})`);
+            headGroup.setAttribute('opacity', headOpacity.toFixed(2));
+
+            // --- B. Update Body Segments & Fins ---
+            for (let i = 0; i < numSegments; i++) {
+                const sDist = headDist - (i + 1) * segSpacing;
+                const sPt = this.getPointOnPath(sDist);
+
+                const slither = Math.sin(timestamp * 0.009 - (i + 1) * 0.38) * Math.min(1.0, (i + 2) / 5) * 8.0;
+                const bx = sPt.x + sPt.nx * slither;
+                const by = sPt.y + sPt.ny * slither;
+                const bAngle = sPt.angle + Math.cos(timestamp * 0.009 - (i + 1) * 0.38) * 0.25;
+                const bDeg = (bAngle * 180 / Math.PI).toFixed(2);
+
+                let bOpacity = 1.0;
+                if (sDist < 0) {
+                    bOpacity = Math.max(0, 1 + sDist / 60);
+                } else if (sDist > totalLen) {
+                    bOpacity = Math.max(0, 1 - (sDist - totalLen) / 100);
+                }
+
+                bodySegments[i].group.setAttribute('transform', `translate(${bx.toFixed(2)}, ${by.toFixed(2)}) rotate(${bDeg})`);
+                bodySegments[i].group.setAttribute('opacity', bOpacity.toFixed(2));
+                bodySegments[i].curX = bx;
+                bodySegments[i].curY = by;
+                bodySegments[i].curNx = sPt.nx;
+                bodySegments[i].curNy = sPt.ny;
+                bodySegments[i].curOpacity = bOpacity;
+            }
+
+            // --- C. Update Running Dragon Claws (4 legs) ---
+            for (const leg of legElements) {
+                const segData = bodySegments[leg.segIndex];
+                if (!segData) continue;
+
+                const legStride = Math.sin(timestamp * 0.016 + leg.phase) * 7.5;
+                const clawExt = leg.side * (segData.radius + 7 + Math.abs(legStride * 0.25));
+
+                const kneeX = segData.curNx * (clawExt * 0.55) + segData.curNy * (legStride * 0.4);
+                const kneeY = segData.curNy * (clawExt * 0.55) - segData.curNx * (legStride * 0.4);
+
+                const footX = segData.curNx * clawExt + segData.curNy * legStride;
+                const footY = segData.curNy * clawExt - segData.curNx * legStride;
+
+                const bx = segData.curX;
+                const by = segData.curY;
+
+                leg.el.setAttribute('d', `M ${bx.toFixed(2)},${by.toFixed(2)} Q ${(bx + kneeX).toFixed(2)},${(by + kneeY).toFixed(2)} ${(bx + footX).toFixed(2)},${(by + footY).toFixed(2)}`);
+                leg.el.setAttribute('opacity', (segData.curOpacity * 0.9).toFixed(2));
+            }
+
+            // --- D. Update Wake Trail Embers ---
+            const maxTrailOffset = numSegments * segSpacing + 80;
+            for (const spark of trailSparks) {
+                const eDist = headDist - spark.distOffset;
+                const ePt = this.getPointOnPath(eDist);
+
+                const eSway = Math.sin(timestamp * spark.swayFreq + spark.phase) * spark.swayAmp;
+                const ex = ePt.x + ePt.nx * eSway;
+                const ey = ePt.y + ePt.ny * eSway;
+
+                const lifeT = spark.distOffset / maxTrailOffset;
+                const fade = Math.sin(lifeT * Math.PI);
+                let eOpacity = fade * (0.65 + 0.35 * Math.sin(timestamp * 0.03 + spark.phase));
+
+                if (eDist < -30 || eDist > totalLen + 30) {
+                    eOpacity = 0;
+                }
+
+                spark.el.setAttribute('cx', ex.toFixed(2));
+                spark.el.setAttribute('cy', ey.toFixed(2));
+                spark.el.setAttribute('r', (spark.baseRadius * (0.8 + 0.4 * Math.sin(timestamp * 0.02 + spark.phase))).toFixed(2));
+                spark.el.setAttribute('opacity', Math.max(0, Math.min(1, eOpacity)).toFixed(2));
+            }
+
+            // --- E. Update Destination Supernova Burst ---
+            const burstElapsed = timestamp - burstStartTime;
+            if (burstElapsed >= 0 && burstElapsed < 900) {
+                const burstT = burstElapsed / 900;
+                for (const sp of burstSparks) {
+                    const travel = burstT * sp.speed;
+                    const px = destNode.x + Math.cos(sp.angle) * travel;
+                    const py = destNode.y + Math.sin(sp.angle) * travel;
+                    const op = Math.max(0, 1 - burstT * 1.1);
+
+                    sp.el.setAttribute('cx', px.toFixed(2));
+                    sp.el.setAttribute('cy', py.toFixed(2));
+                    sp.el.setAttribute('r', (sp.radius * (1 - burstT * 0.4)).toFixed(2));
+                    sp.el.setAttribute('opacity', op.toFixed(2));
+                }
+            } else {
+                for (const sp of burstSparks) {
+                    sp.el.setAttribute('opacity', '0');
                 }
             }
 
-            this.sparkAnimId = requestAnimationFrame(animate);
+            this.dragonAnimId = requestAnimationFrame(animate);
         };
 
-        this.sparkAnimId = requestAnimationFrame(animate);
+        this.dragonAnimId = requestAnimationFrame(animate);
     }
 
-    stopBlazingFireParticles() {
+    stopBlazingFireDragon() {
+        if (this.dragonAnimId) {
+            cancelAnimationFrame(this.dragonAnimId);
+            this.dragonAnimId = null;
+        }
         if (this.sparkAnimId) {
             cancelAnimationFrame(this.sparkAnimId);
             this.sparkAnimId = null;
@@ -800,5 +1102,14 @@ class GraphEditor {
         this.sparks = [];
         this.sparkSegments = [];
         this.sparkTotalLength = 0;
+    }
+
+    // Aliases for backwards compatibility
+    startBlazingFireParticles() {
+        this.startBlazingFireDragon();
+    }
+
+    stopBlazingFireParticles() {
+        this.stopBlazingFireDragon();
     }
 }

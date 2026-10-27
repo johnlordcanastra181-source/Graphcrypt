@@ -158,9 +158,9 @@ class AStarUIController {
                     data.execution_time_ms
                 );
 
-                this.addLog(`🔥 Blazing fire route resolved: ${data.path.join(' → ')} (Total Cost: ${data.total_cost})`, 'success');
+                this.addLog(`🐉 Blazing Fire Dragon route resolved: ${data.path.join(' → ')} (Total Cost: ${data.total_cost})`, 'success');
                 this.stepTag.textContent = `Completed (${totalSteps} steps)`;
-                window.showToast?.(`🔥 Blazing fire path found: ${data.path.join(' → ')} with cost ${data.total_cost}`, 'success');
+                window.showToast?.(`🐉 Blazing Fire Dragon charging to destination: ${data.path.join(' → ')} with cost ${data.total_cost}`, 'success');
 
                 // Notify crypto workflow to auto-update
                 if (window.cryptoUI) {

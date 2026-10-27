@@ -817,6 +817,87 @@ html, body {
     mix-blend-mode: screen;
 }
 
+/* ==========================================================================
+   FIRE DRAGON ROUTE FINDING VISUALIZATION
+   ========================================================================== */
+.dragon-container {
+    pointer-events: none;
+    mix-blend-mode: screen;
+}
+
+.dragon-head-group {
+    filter: drop-shadow(0 0 6px #FFE033) drop-shadow(0 0 14px #FF5500) drop-shadow(0 0 24px #D50000);
+}
+
+.dragon-head-skull {
+    fill: url(#dragon-head-gradient);
+    stroke: #FFE57F;
+    stroke-width: 1.6px;
+    stroke-linejoin: round;
+}
+
+.dragon-horn {
+    fill: url(#dragon-horn-gradient);
+    stroke: #FFA000;
+    stroke-width: 1.2px;
+    stroke-linejoin: round;
+}
+
+.dragon-eye {
+    fill: #FFFFFF;
+    stroke: #FFE57F;
+    stroke-width: 0.8px;
+    filter: drop-shadow(0 0 5px #FFFF00);
+}
+
+.dragon-whisker {
+    stroke: #FFE57F;
+    stroke-width: 1.5px;
+    stroke-linecap: round;
+    fill: none;
+    opacity: 0.9;
+    filter: drop-shadow(0 0 3px #FF9D00);
+}
+
+.dragon-flame-breath {
+    fill: url(#blazing-fire-line-gradient);
+    filter: drop-shadow(0 0 8px #FF6A00) drop-shadow(0 0 16px #FF1A00);
+    animation: dragonFlameBreathFlicker 0.25s ease-in-out infinite alternate;
+}
+
+@keyframes dragonFlameBreathFlicker {
+    0% { transform: scale(0.9) translate(0, 0); opacity: 0.75; }
+    100% { transform: scale(1.3) translate(5px, 0); opacity: 1; }
+}
+
+.dragon-body-segment {
+    fill: url(#dragon-body-gradient);
+    stroke: #FFA000;
+    stroke-width: 1.5px;
+    filter: drop-shadow(0 0 6px #FF5500) drop-shadow(0 0 14px #D50000);
+}
+
+.dragon-spine-fin {
+    fill: #FFE033;
+    stroke: #FF3700;
+    stroke-width: 1px;
+    filter: drop-shadow(0 0 4px #FF5500);
+}
+
+.dragon-claw {
+    fill: none;
+    stroke: #FFB300;
+    stroke-width: 2.4px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 4px #FF3700);
+}
+
+.dragon-burst-spark {
+    pointer-events: none;
+    mix-blend-mode: screen;
+}
+
 @keyframes pulseActive {
     from { filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.4)); }
     to { filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.8)); }
