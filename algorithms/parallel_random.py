@@ -194,10 +194,22 @@ def randomized_quicksort(data: List[Any]) -> Dict[str, Any]:
 
     elapsed_us = (time.perf_counter() - start_time) * 1_000_000
 
+    if len(arr) > 25:
+        max_start = max(0, len(arr) - 25)
+        start_idx = random.randint(0, max_start)
+        sorted_sample = arr[start_idx : start_idx + 25]
+        sample_range = f"Tokens {start_idx + 1}–{start_idx + len(sorted_sample)} of {len(arr)}"
+    else:
+        start_idx = 0
+        sorted_sample = arr
+        sample_range = f"All {len(arr)} tokens"
+
     return {
         "method": "Randomized QuickSort",
         "original_count": len(data),
-        "sorted_sample": arr[:50],
+        "sorted_sample": sorted_sample,
+        "sample_range": sample_range,
+        "sample_start_index": start_idx,
         "sorted_full": arr,
         "comparisons": stats["comparisons"],
         "recursion_depth": stats["max_depth"],

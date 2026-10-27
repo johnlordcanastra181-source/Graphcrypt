@@ -1291,11 +1291,16 @@ class TextSuiteController {
 
     async executeRandomSort() {
         const text = this.currentCorpus || "Bohol Island State University Computer Science";
+        this.randomSortRunCount = (this.randomSortRunCount || 0) + 1;
         try {
             const res = await fetch('/api/randomized/quicksort', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: text, split_mode: "words" })
+                body: JSON.stringify({
+                    text: text,
+                    split_mode: "words",
+                    sample_tokens: true
+                })
             });
             const data = await res.json();
             if (!data.success) return;
@@ -1303,14 +1308,16 @@ class TextSuiteController {
             document.getElementById('random-sort-comps').textContent = data.comparisons.toLocaleString();
             document.getElementById('random-sort-depth').textContent = data.recursion_depth;
             document.getElementById('random-sort-time').textContent = `${data.time_microseconds} µs`;
-            document.getElementById('random-sort-output').textContent = (data.sorted_sample || []).join(' | ');
+
+            const runTag = `[Run #${this.randomSortRunCount} | ${data.sample_range || `${data.original_count} tokens`}]:\n`;
+            document.getElementById('random-sort-output').textContent = runTag + (data.sorted_sample || []).join(' | ');
 
             this.lastResults.randomSort = data;
             this.lastResults.parallelSearch = null;
             this.lastResults.quickSelect = null;
             this.renderRandomSortFlow(data);
 
-            window.showToast(`Randomized Quicksort sorted ${data.original_count} tokens.`, 'success');
+            window.showToast(`Randomized Quicksort (Run #${this.randomSortRunCount}) sorted ${data.original_count} tokens.`, 'success');
         } catch (err) {
             window.showToast('Error running Randomized Quicksort.', 'error');
         }

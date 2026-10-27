@@ -571,9 +571,11 @@ def parallel_search_api():
 @app.route("/api/randomized/quicksort", methods=["POST"])
 def randomized_quicksort_api():
     """Sorts input list or text lines/tokens using Randomized QuickSort."""
+    import random
     data = _json_body()
     text = data.get("text", "")
     items = data.get("items")
+    sample_tokens = data.get("sample_tokens", True)
 
     if items is None:
         if not text:
@@ -581,9 +583,17 @@ def randomized_quicksort_api():
         # Split text into lines or tokens
         mode = data.get("split_mode", "words")
         if mode == "lines":
-            items = [line.strip() for line in text.splitlines() if line.strip()]
+            all_tokens = [line.strip() for line in text.splitlines() if line.strip()]
         else:
-            items = [word.strip(".,;:!?()[]\"'") for word in text.split() if word.strip()]
+            all_tokens = [word.strip(".,;:!?()[]\"'") for word in text.split() if word.strip()]
+
+        if sample_tokens and len(all_tokens) > 15:
+            min_batch = min(25, len(all_tokens))
+            max_batch = min(75, len(all_tokens))
+            batch_size = random.randint(min_batch, max_batch)
+            items = [random.choice(all_tokens) for _ in range(batch_size)]
+        else:
+            items = all_tokens
 
     result = randomized_quicksort(items)
     return jsonify({"success": True, **result})
