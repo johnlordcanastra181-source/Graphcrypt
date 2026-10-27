@@ -18,7 +18,7 @@ def generate_concise_txt(
 ) -> str:
     """
     Generates concise TXT content formatted exactly as shown in the screenshot preview:
-    
+
     --- ENCRYPTED EDGE WEIGHTS ---
     A -> B : 8
     A -> C : 6
@@ -31,6 +31,10 @@ def generate_concise_txt(
     Shift: +3
     Algorithm: A*
     Heuristic: Euclidean Distance
+
+    Note: the "ENCRYPTED EDGE WEIGHTS" block lists EVERY edge in the graph, not
+    only the edges on the shortest path. The path-specific totals are added
+    under the Metadata block when a path is available.
     """
     transforms = get_edge_transformations(graph, path_nodes, shift)
     

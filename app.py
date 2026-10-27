@@ -4,7 +4,8 @@ Precision Algorithm Engine: Weighted A* Pathfinding + Caesar Cipher Cryptography
 """
 
 import os
-from typing import Any, Dict
+import secrets
+from typing import Any, Dict, Optional
 from flask import Flask, render_template, request, jsonify, send_file, Response
 from werkzeug.exceptions import HTTPException
 
@@ -38,12 +39,53 @@ from algorithms import (
 )
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'graphcrypt-precision-secret-key-v1'
+# Secret key is read from the environment. A random per-process key is generated
+# when it is unset, so no hardcoded credential ever ships in the repository.
+# (No session is currently used, so this is defensive rather than urgent.)
+app.config['SECRET_KEY'] = os.environ.get("GRAPHCrypt_SECRET_KEY") or secrets.token_hex(32)
 
 # Global application graph state
 graph_instance = Graph()
 last_astar_result: Dict[str, Any] = {}
 last_shift_value: int = 3
+
+# Default host/port for the development server. Binding to 0.0.0.0 would expose
+# the Werkzeug debugger to every device on the LAN, so localhost is the default.
+DEFAULT_HOST = os.environ.get("GRAPHCrypt_HOST", "127.0.0.1")
+DEFAULT_DEBUG = os.environ.get("GRAPHCrypt_DEBUG", "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _json_body() -> Dict[str, Any]:
+    """Parses the request body as JSON, tolerating empty or malformed payloads."""
+    return request.get_json(silent=True) or {}
+
+
+def _int_field(data: Dict[str, Any], key: str, default: int, minimum: Optional[int] = None,
+               maximum: Optional[int] = None) -> int:
+    """Reads an integer field from a JSON body, raising ValueError on bad input."""
+    raw = data.get(key, default)
+    if raw is None:
+        raw = default
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        raise ValueError(f"'{key}' must be a valid integer.")
+    if minimum is not None and value < minimum:
+        raise ValueError(f"'{key}' must be greater than or equal to {minimum}.")
+    if maximum is not None and value > maximum:
+        raise ValueError(f"'{key}' must be less than or equal to {maximum}.")
+    return value
+
+
+def _float_field(data: Dict[str, Any], key: str, default: float) -> float:
+    """Reads a float field from a JSON body, raising ValueError on bad input."""
+    raw = data.get(key, default)
+    if raw is None:
+        raw = default
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        raise ValueError(f"'{key}' must be a valid number.")
 
 
 @app.errorhandler(Exception)
@@ -73,11 +115,18 @@ def get_graph():
 @app.route("/api/nodes", methods=["POST"])
 def add_node():
     """Adds a new node to the graph."""
-    data = request.get_json() or {}
+    data = _json_body()
     node_id = data.get("id") or data.get("name")
-    name = data.get("name", node_id)
-    x = data.get("x", 200)
-    y = data.get("y", 200)
+    if node_id is None or not str(node_id).strip():
+        return jsonify({"error": "Node id or name is required."}), 400
+    node_id = str(node_id).strip()
+
+    name = data.get("name") or node_id
+    try:
+        x = float(data.get("x", 200))
+        y = float(data.get("y", 200))
+    except (TypeError, ValueError):
+        return jsonify({"error": "Node coordinates must be valid numbers."}), 400
 
     try:
         node = graph_instance.add_node(node_id, name, x, y)
@@ -89,10 +138,16 @@ def add_node():
 @app.route("/api/nodes/<node_id>", methods=["PUT"])
 def update_node(node_id):
     """Updates node position or label."""
-    data = request.get_json() or {}
+    data = _json_body()
     name = data.get("name")
     x = data.get("x")
     y = data.get("y")
+
+    try:
+        x = float(x) if x is not None else None
+        y = float(y) if y is not None else None
+    except (TypeError, ValueError):
+        return jsonify({"error": "Node coordinates must be valid numbers."}), 400
 
     try:
         node = graph_instance.update_node(node_id, name=name, x=x, y=y)
@@ -116,7 +171,7 @@ def delete_node(node_id):
 @app.route("/api/edges", methods=["POST"])
 def add_edge():
     """Adds a weighted connection between two nodes."""
-    data = request.get_json() or {}
+    data = _json_body()
     source = data.get("source")
     target = data.get("target")
     weight = data.get("weight")
@@ -137,7 +192,7 @@ def add_edge():
 @app.route("/api/edges/<edge_id>", methods=["PUT"])
 def update_edge(edge_id):
     """Updates the numerical weight of an edge."""
-    data = request.get_json() or {}
+    data = _json_body()
     weight = data.get("weight")
 
     if weight is None:
@@ -165,7 +220,7 @@ def delete_edge(edge_id):
 @app.route("/api/reset", methods=["POST"])
 def reset_graph():
     """Resets the graph to default sample or clean empty state."""
-    data = request.get_json() or {}
+    data = _json_body()
     mode = data.get("mode", "sample")
     
     global last_astar_result
@@ -186,9 +241,9 @@ def reset_graph():
 @app.route("/api/astar/run", methods=["POST"])
 def astar_run():
     """Runs weighted A* algorithm and caches results."""
-    data = request.get_json() or {}
+    data = _json_body()
     start_node = data.get("start_node", "A")
-    goal_node = data.get("goal_node", "E")
+    goal_node = data.get("goal_node", "T")
     heuristic = data.get("heuristic", "Euclidean Distance")
 
     result = run_astar(graph_instance, start_node, goal_node, heuristic)
@@ -202,6 +257,22 @@ def astar_run():
     return jsonify(result)
 
 
+@app.route("/api/astar/last", methods=["GET"])
+def astar_last():
+    """Returns the most recent A* result so the UI never shows a stale path."""
+    if not last_astar_result:
+        return jsonify({"success": False, "error": "No A* result available yet.", "path": [], "total_cost": 0.0})
+    return jsonify({
+        "success": True,
+        "path": last_astar_result.get("path", []),
+        "path_edges": last_astar_result.get("path_edges", []),
+        "total_cost": last_astar_result.get("total_cost", 0.0),
+        "heuristic_used": last_astar_result.get("heuristic_used", "Euclidean Distance"),
+        "start_node": last_astar_result.get("start_node"),
+        "goal_node": last_astar_result.get("goal_node"),
+    })
+
+
 # ==========================================
 # CRYPTOGRAPHY & CIPHER API
 # ==========================================
@@ -209,7 +280,7 @@ def astar_run():
 @app.route("/api/cipher/encrypt", methods=["POST"])
 def encrypt_weights():
     """Calculates Modulo 10 Caesar cipher transformations."""
-    data = request.get_json() or {}
+    data = _json_body()
     try:
         shift = int(data.get("shift", 3))
     except (ValueError, TypeError):
@@ -233,7 +304,7 @@ def encrypt_weights():
 @app.route("/api/export/preview", methods=["POST"])
 def export_preview():
     """Generates preview text formatted for UI display."""
-    data = request.get_json() or {}
+    data = _json_body()
     try:
         shift = int(data.get("shift", last_shift_value))
     except (ValueError, TypeError):
@@ -258,13 +329,18 @@ def export_preview():
 def export_download():
     """Generates and streams an actual encrypted_edge_weights.txt file download."""
     if request.method == "POST":
-        data = request.get_json() or {}
-        shift = int(data.get("shift", last_shift_value))
+        data = _json_body()
+        try:
+            shift = int(data.get("shift", last_shift_value))
+        except (ValueError, TypeError):
+            return jsonify({"error": "Shift value must be a valid integer."}), 400
         path_nodes = data.get("path_nodes", last_astar_result.get("path", []))
         heuristic = data.get("heuristic", "Euclidean Distance")
         format_type = data.get("format", "concise")
     else:
         shift = request.args.get("shift", default=last_shift_value, type=int)
+        if shift is None:
+            return jsonify({"error": "Shift value must be a valid integer."}), 400
         path_nodes = last_astar_result.get("path", [])
         heuristic = request.args.get("heuristic", default="Euclidean Distance", type=str)
         format_type = request.args.get("format", default="concise", type=str)
@@ -314,7 +390,7 @@ def get_sample_datasets():
 @app.route("/api/text/load-sample", methods=["POST"])
 def load_sample_dataset():
     """Loads full content of a requested sample dataset."""
-    data = request.get_json() or {}
+    data = _json_body()
     sample_id = data.get("sample_id", "sample_literature.txt")
     # Sanitize path to prevent traversal
     safe_name = os.path.basename(sample_id)
@@ -338,11 +414,14 @@ def load_sample_dataset():
 @app.route("/api/search/pattern", methods=["POST"])
 def search_pattern():
     """Executes selected string pattern matching algorithm or comparative evaluation."""
-    data = request.get_json() or {}
+    data = _json_body()
     text = data.get("text", "")
     pattern = data.get("pattern", "")
     algo = data.get("algorithm", "All")
-    max_distance = int(data.get("max_distance", 1))
+    try:
+        max_distance = _int_field(data, "max_distance", 1, minimum=1)
+    except ValueError as err:
+        return jsonify({"error": str(err)}), 400
 
     if not text or not pattern:
         return jsonify({"error": "Both text and pattern are required."}), 400
@@ -373,7 +452,7 @@ def search_pattern():
 @app.route("/api/compression/compress", methods=["POST"])
 def compress_text():
     """Compresses text via Huffman, RLE, or LZW with full telemetry."""
-    data = request.get_json() or {}
+    data = _json_body()
     text = data.get("text", "")
     method = data.get("method", "Huffman")
 
@@ -390,7 +469,7 @@ def compress_text():
 @app.route("/api/compression/compare-all", methods=["POST"])
 def compress_compare_all():
     """Runs Huffman, RLE, and LZW side-by-side on the provided text."""
-    data = request.get_json() or {}
+    data = _json_body()
     text = data.get("text", "")
 
     if not text:
@@ -414,16 +493,23 @@ def compress_compare_all():
 @app.route("/api/optimization/run", methods=["POST"])
 def run_optimization():
     """Runs Genetic Algorithm or 0/1 Knapsack optimization."""
-    data = request.get_json() or {}
+    data = _json_body()
     technique = data.get("technique", "GA")
-    capacity = int(data.get("capacity", 50))
     items = data.get("items")
 
+    try:
+        capacity = _int_field(data, "capacity", 50, minimum=1)
+    except ValueError as err:
+        return jsonify({"error": str(err)}), 400
+
     if technique == "GA":
-        pop_size = int(data.get("population_size", 40))
-        generations = int(data.get("generations", 50))
-        crossover = float(data.get("crossover_rate", 0.8))
-        mutation = float(data.get("mutation_rate", 0.05))
+        try:
+            pop_size = _int_field(data, "population_size", 40, minimum=2)
+            generations = _int_field(data, "generations", 50, minimum=1)
+            crossover = _float_field(data, "crossover_rate", 0.8)
+            mutation = _float_field(data, "mutation_rate", 0.05)
+        except ValueError as err:
+            return jsonify({"error": str(err)}), 400
 
         res = run_genetic_algorithm(
             items=items,
@@ -466,10 +552,13 @@ def run_optimization():
 @app.route("/api/parallel/search", methods=["POST"])
 def parallel_search_api():
     """Runs parallel pattern search across configurable thread workers."""
-    data = request.get_json() or {}
+    data = _json_body()
     text = data.get("text", "")
     pattern = data.get("pattern", "")
-    workers = int(data.get("workers", 4))
+    try:
+        workers = _int_field(data, "workers", 4, minimum=1, maximum=16)
+    except ValueError as err:
+        return jsonify({"error": str(err)}), 400
 
     if not text or not pattern:
         return jsonify({"error": "Both text and pattern are required."}), 400
@@ -482,7 +571,7 @@ def parallel_search_api():
 @app.route("/api/randomized/quicksort", methods=["POST"])
 def randomized_quicksort_api():
     """Sorts input list or text lines/tokens using Randomized QuickSort."""
-    data = request.get_json() or {}
+    data = _json_body()
     text = data.get("text", "")
     items = data.get("items")
 
@@ -503,23 +592,31 @@ def randomized_quicksort_api():
 @app.route("/api/randomized/quickselect", methods=["POST"])
 def randomized_quickselect_api():
     """Finds k-th smallest element using Randomized QuickSelect."""
-    data = request.get_json() or {}
+    data = _json_body()
     items = data.get("items", [])
-    k = int(data.get("k", 0))
+    try:
+        k = _int_field(data, "k", 0, minimum=0)
+    except ValueError as err:
+        return jsonify({"error": str(err)}), 400
 
     if not items:
         return jsonify({"error": "Items list is required."}), 400
 
     result = randomized_quickselect(items, k)
+    if "error" in result:
+        return jsonify({"success": False, **result}), 400
     return jsonify({"success": True, **result})
 
 
 @app.route("/api/randomized/monte-carlo", methods=["POST"])
 def monte_carlo_api():
     """Performs Monte Carlo text sampling."""
-    data = request.get_json() or {}
+    data = _json_body()
     text = data.get("text", "")
-    sample_size = int(data.get("sample_size", 100))
+    try:
+        sample_size = _int_field(data, "sample_size", 100, minimum=1)
+    except ValueError as err:
+        return jsonify({"error": str(err)}), 400
 
     if not text:
         return jsonify({"error": "Input text is required."}), 400
@@ -541,7 +638,7 @@ def complexity_matrix_api():
 @app.route("/api/benchmark/full", methods=["POST"])
 def full_benchmark_api():
     """Executes an end-to-end multi-algorithm benchmark on the provided text."""
-    data = request.get_json() or {}
+    data = _json_body()
     text = data.get("text", "")
     pattern = data.get("pattern", "algorithm")
 
@@ -575,6 +672,21 @@ def full_benchmark_api():
     })
 
 
+@app.route("/favicon.ico")
+def favicon():
+    """Serves an inline SVG favicon so the browser stops requesting a missing file."""
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
+        '<rect width="32" height="32" rx="6" fill="#070B14"/>'
+        '<circle cx="9" cy="10" r="3.5" fill="#00F0FF"/>'
+        '<circle cx="23" cy="9" r="3.5" fill="#A855F7"/>'
+        '<circle cx="16" cy="24" r="3.5" fill="#00FF9D"/>'
+        '<path d="M9 10 L23 9 M9 10 L16 24 M23 9 L16 24" stroke="#5B7FA6" stroke-width="1.6"/>'
+        "</svg>"
+    )
+    return Response(svg, mimetype="image/svg+xml")
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host=DEFAULT_HOST, port=5000, debug=DEFAULT_DEBUG)
 

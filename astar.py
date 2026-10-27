@@ -156,6 +156,9 @@ def run_astar(
     
     visited_nodes_order = []
     evaluated_edges_order = []
+    # Membership set mirrors evaluated_edges_order so the per-expansion check is
+    # O(1) instead of an O(E) list scan on every neighbour.
+    evaluated_edges_seen = set()
     steps = []
     step_count = 0
 
@@ -202,7 +205,8 @@ def run_astar(
 
         # Explore neighbors
         for neighbor_id, weight, edge_id in graph.get_neighbors(current_node):
-            if edge_id not in evaluated_edges_order:
+            if edge_id not in evaluated_edges_seen:
+                evaluated_edges_seen.add(edge_id)
                 evaluated_edges_order.append(edge_id)
                 
             if neighbor_id in closed_set:

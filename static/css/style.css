@@ -200,18 +200,8 @@ html, body {
     flex-shrink: 0;
 }
 
-.sidebar-footer {
-    padding-top: 16px;
-    border-top: 1px solid var(--border-subtle);
-}
-
-.nav-item-footer {
-    padding: 10px 14px;
-    font-size: 13px;
-}
-
 /* ==========================================================================
-   MAIN VIEWPORT & WORKFLOW HEADER
+   MAIN VIEWPORT & TOP STATUS HEADER
    ========================================================================== */
 .main-viewport {
     flex: 1;
@@ -234,87 +224,120 @@ html, body {
     z-index: 10;
 }
 
-.workflow-breadcrumbs {
+/* Running Status Header (replaces the old workflow breadcrumb bar) */
+.running-header {
     display: flex;
     align-items: center;
-    gap: 12px;
-    overflow-x: auto;
+    gap: 16px;
+    min-width: 0;
 }
 
-.wf-step {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12.5px;
+/* Pulsing live indicator */
+.running-dot {
+    position: relative;
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--green-status);
+    box-shadow:
+        0 0 12px rgba(16, 185, 129, 0.95),
+        0 0 28px rgba(16, 185, 129, 0.45);
+}
+
+.running-dot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: var(--green-status);
+    animation: running-pulse 2s ease-out infinite;
+}
+
+@keyframes running-pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.85;
+    }
+    70% {
+        transform: scale(3.4);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(3.4);
+        opacity: 0;
+    }
+}
+
+.running-title {
+    font-size: 30px;
     font-weight: 500;
-    color: var(--text-dim);
-    transition: all 0.2s ease;
-    cursor: pointer;
-    padding: 6px 10px;
-    border-radius: var(--radius-full);
-}
-
-.wf-step:hover {
-    color: var(--text-muted);
-}
-
-.wf-dot {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.08);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--border-subtle);
-}
-
-.wf-dot-inner {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--text-dim);
-}
-
-.wf-separator {
-    color: var(--text-dim);
-    font-size: 12px;
-    opacity: 0.5;
-}
-
-/* Breadcrumb States */
-.wf-step.active {
-    color: var(--cyan-primary);
-    font-weight: 600;
-    background: rgba(0, 240, 255, 0.08);
-    border: 1px solid rgba(0, 240, 255, 0.3);
-}
-
-.wf-step.active .wf-dot {
-    background: var(--cyan-primary);
-    border-color: var(--cyan-primary);
-    box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
-}
-
-.wf-step.active .wf-dot-inner {
-    background: #060B17;
-}
-
-.wf-step.completed {
     color: var(--text-main);
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+    line-height: 1.1;
 }
 
-.wf-step.completed .wf-dot {
-    background: rgba(16, 185, 129, 0.15);
-    border-color: var(--green-status);
-    color: var(--green-status);
+/* Animated gradient sweep across the "GraphCrypt" wordmark */
+.running-title strong {
+    font-weight: 800;
+    font-size: 30px;
+    letter-spacing: -0.015em;
+    background-image: linear-gradient(
+        100deg,
+        #00F0FF 0%,
+        #7DE9FF 18%,
+        #A78BFA 38%,
+        #00F0FF 58%,
+        #7DE9FF 78%,
+        #00F0FF 100%
+    );
+    background-size: 280% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: running-shine 3.2s linear infinite;
+    filter: drop-shadow(0 0 16px rgba(0, 240, 255, 0.55));
 }
 
-.wf-check-icon {
-    width: 11px;
-    height: 11px;
-    stroke: var(--green-status);
-    stroke-width: 3;
+@keyframes running-shine {
+    0% {
+        background-position: 0% 50%;
+    }
+    100% {
+        background-position: 280% 50%;
+    }
+}
+
+.running-divider {
+    width: 1px;
+    height: 26px;
+    background: var(--border-medium);
+    flex-shrink: 0;
+}
+
+.running-subtitle {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+    .running-divider,
+    .running-subtitle {
+        display: none;
+    }
+}
+
+@media (max-width: 620px) {
+    .running-title,
+    .running-title strong {
+        font-size: 24px;
+    }
 }
 
 .header-tools {
@@ -544,17 +567,82 @@ html, body {
     stroke-width: 3;
 }
 
-.graph-edge-line.path-active {
-    stroke: #00F0FF;
-    stroke-width: 4;
-    stroke-dasharray: 6 3;
-    animation: edgeFlow 1.2s linear infinite;
-    filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.6));
+/* Blazing Fire Pathfinding Edge Effect */
+.graph-edge-fire-aura {
+    stroke: #FF1A00;
+    stroke-width: 14px;
+    stroke-linecap: round;
+    opacity: 0.4;
+    filter: blur(4px) drop-shadow(0 0 10px #FF3700);
+    animation: blazingFireAuraPulse 1.4s ease-in-out infinite alternate;
+    pointer-events: none;
 }
 
-@keyframes edgeFlow {
-    from { stroke-dashoffset: 18; }
+.graph-edge-line.path-active {
+    stroke: #FF4500;
+    stroke-width: 5px;
+    stroke-linecap: round;
+    stroke-dasharray: 10 5;
+    animation: blazingFireEdgeFlow 0.85s linear infinite, blazingFireFlameFlicker 1.8s ease-in-out infinite alternate;
+    filter: drop-shadow(0 0 4px #FFF2A3) drop-shadow(0 0 10px #FF6A00) drop-shadow(0 0 20px #D92200);
+}
+
+.graph-edge-fire-core {
+    stroke: #FFF7C2;
+    stroke-width: 2.2px;
+    stroke-linecap: round;
+    opacity: 0.95;
+    stroke-dasharray: 14 6;
+    animation: blazingFireCoreFlow 0.85s linear infinite;
+    pointer-events: none;
+    filter: drop-shadow(0 0 3px #FFFFFF);
+}
+
+@keyframes blazingFireEdgeFlow {
+    from { stroke-dashoffset: 30; }
     to { stroke-dashoffset: 0; }
+}
+
+@keyframes blazingFireCoreFlow {
+    from { stroke-dashoffset: 40; }
+    to { stroke-dashoffset: 0; }
+}
+
+@keyframes blazingFireAuraPulse {
+    0% {
+        opacity: 0.3;
+        stroke-width: 12px;
+    }
+    100% {
+        opacity: 0.6;
+        stroke-width: 16px;
+    }
+}
+
+@keyframes blazingFireFlameFlicker {
+    0% {
+        filter: drop-shadow(0 0 3px #FFF2A3) drop-shadow(0 0 8px #FF5500) drop-shadow(0 0 16px #D92200);
+    }
+    50% {
+        filter: drop-shadow(0 0 6px #FFFFFF) drop-shadow(0 0 14px #FF8800) drop-shadow(0 0 26px #FF2200);
+    }
+    100% {
+        filter: drop-shadow(0 0 4px #FFE082) drop-shadow(0 0 10px #FF6A00) drop-shadow(0 0 18px #B71C1C);
+    }
+}
+
+/* Active Path Weight Badge - Blazing Ember */
+.edge-weight-group.path-active .edge-weight-bg {
+    fill: #1A0500;
+    stroke: #FF5722;
+    stroke-width: 1.8px;
+    filter: drop-shadow(0 0 8px rgba(255, 87, 34, 0.75));
+}
+
+.edge-weight-group.path-active .edge-weight-text {
+    fill: #FFD54F;
+    font-weight: 800;
+    filter: drop-shadow(0 0 4px rgba(255, 110, 0, 0.8));
 }
 
 /* Edge Weight Badge */
@@ -670,11 +758,63 @@ html, body {
     animation: pulseActive 1s infinite alternate;
 }
 
+/* Blazing Fire Path Nodes */
 .graph-node-group.path-node .node-body {
-    stroke: #00F0FF;
-    stroke-width: 3;
-    fill: #0C1E3D;
-    filter: drop-shadow(0 0 14px rgba(0, 240, 255, 0.7));
+    stroke: #FFA000;
+    stroke-width: 3.5px;
+    fill: url(#blazing-fire-node-gradient) !important;
+    animation: blazingNodeFlameGlow 1.6s ease-in-out infinite alternate;
+    filter: drop-shadow(0 0 6px #FFD54F) drop-shadow(0 0 14px #FF5722) drop-shadow(0 0 24px #D50000);
+}
+
+.graph-node-group.path-node .node-halo {
+    stroke: #FF6D00;
+    stroke-width: 7px;
+    stroke-dasharray: 6 3;
+    opacity: 0.75;
+    animation: blazingHaloFlicker 1.2s linear infinite;
+    filter: drop-shadow(0 0 8px #FF3D00);
+}
+
+.graph-node-group.path-node .node-label {
+    fill: #FFFFFF !important;
+    font-weight: 800;
+    filter: drop-shadow(0 0 2px #000000) drop-shadow(0 0 6px #FF3D00);
+}
+
+@keyframes blazingNodeFlameGlow {
+    0% {
+        stroke: #FF8F00;
+        filter: drop-shadow(0 0 4px #FFE082) drop-shadow(0 0 12px #FF5722) drop-shadow(0 0 20px #BF360C);
+    }
+    50% {
+        stroke: #FFD54F;
+        filter: drop-shadow(0 0 8px #FFFFFF) drop-shadow(0 0 18px #FF9100) drop-shadow(0 0 32px #DD2C00);
+    }
+    100% {
+        stroke: #FFA000;
+        filter: drop-shadow(0 0 5px #FFCA28) drop-shadow(0 0 14px #FF6E40) drop-shadow(0 0 22px #D50000);
+    }
+}
+
+@keyframes blazingHaloFlicker {
+    0% {
+        stroke-dashoffset: 0;
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 0.9;
+    }
+    100% {
+        stroke-dashoffset: 18;
+        opacity: 0.6;
+    }
+}
+
+/* Ember Spark Particle on Animation Layer */
+.blazing-fire-spark {
+    pointer-events: none;
+    mix-blend-mode: screen;
 }
 
 @keyframes pulseActive {
@@ -696,6 +836,17 @@ html, body {
     flex-direction: column;
     gap: 16px;
     overflow-y: auto;
+}
+
+/* Graph Editor focus mode: the canvas takes the whole workspace and the
+   A* execution panel is hidden, so the "Graph Editor" nav item no longer
+   renders an identical screen to "A* Pathfinding". */
+#view-astar.editor-focus-mode .astar-control-panel {
+    display: none;
+}
+
+#view-astar.editor-focus-mode .canvas-panel {
+    border-right: none;
 }
 
 /* Glass Card */
@@ -1340,12 +1491,14 @@ html, body {
 .path-node-pill {
     font-family: var(--font-mono);
     font-size: 13px;
-    font-weight: 700;
-    color: var(--cyan-primary);
-    background: rgba(0, 240, 255, 0.1);
-    padding: 2px 8px;
-    border-radius: 4px;
-    border: 1px solid rgba(0, 240, 255, 0.25);
+    font-weight: 800;
+    color: #FFE082;
+    background: linear-gradient(135deg, rgba(255, 69, 0, 0.25), rgba(255, 165, 0, 0.15));
+    padding: 3px 9px;
+    border-radius: 5px;
+    border: 1px solid rgba(255, 110, 0, 0.5);
+    box-shadow: 0 0 8px rgba(255, 69, 0, 0.35);
+    text-shadow: 0 0 6px rgba(255, 150, 0, 0.7);
 }
 
 .path-arrow {

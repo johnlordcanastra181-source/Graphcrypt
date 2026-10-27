@@ -310,26 +310,12 @@ def rle_decompress(encoded_text: str) -> str:
 # 3. DICTIONARY-BASED COMPRESSION (LZW)
 # ========================================================
 
-def lzw_compress(text: str) -> Dict[str, Any]:
+def _lzw_encode(text: str) -> tuple:
     """
-    Compresses text using Lempel-Ziv-Welch (LZW) dictionary algorithm.
-    Time Complexity: O(n)
-    Space Complexity: O(dictionary size)
+    Shared LZW encoder used by both `lzw_compress` and the round-trip verifier.
+    Returns (compressed_codes, next_code, history) where history holds the first
+    25 dictionary-growth steps for the educational telemetry panel.
     """
-    start_time = time.perf_counter()
-    if not text:
-        return {
-            "method": "LZW Dictionary Compression",
-            "codes": [],
-            "original_bytes": 0,
-            "compressed_bytes": 0,
-            "compression_ratio": 0.0,
-            "space_savings": 0.0,
-            "time_ms": 0.0,
-            "flow_explanation": "Walang text.",
-            "why_result": "Bakante ang input."
-        }
-
     dictionary: Dict[str, int] = {chr(i): i for i in range(256)}
     next_code = 256
     current = ""
@@ -358,6 +344,31 @@ def lzw_compress(text: str) -> Dict[str, Any]:
 
     if current:
         compressed_codes.append(dictionary[current])
+
+    return compressed_codes, next_code, history
+
+
+def lzw_compress(text: str) -> Dict[str, Any]:
+    """
+    Compresses text using Lempel-Ziv-Welch (LZW) dictionary algorithm.
+    Time Complexity: O(n)
+    Space Complexity: O(dictionary size)
+    """
+    start_time = time.perf_counter()
+    if not text:
+        return {
+            "method": "LZW Dictionary Compression",
+            "codes": [],
+            "original_bytes": 0,
+            "compressed_bytes": 0,
+            "compression_ratio": 0.0,
+            "space_savings": 0.0,
+            "time_ms": 0.0,
+            "flow_explanation": "Walang text.",
+            "why_result": "Bakante ang input."
+        }
+
+    compressed_codes, next_code, history = _lzw_encode(text)
 
     code_bit_width = max(9, math.ceil(math.log2(next_code))) if next_code > 1 else 8
     compressed_bits = len(compressed_codes) * code_bit_width
@@ -438,23 +449,9 @@ def get_compression_stats(original_text: str, method: str = "Huffman") -> Dict[s
 
     elif method == "LZW":
         comp_res = lzw_compress(original_text)
-        dictionary: Dict[str, int] = {chr(i): i for i in range(256)}
-        next_code = 256
-        curr = ""
-        full_codes: List[int] = []
-        for char in original_text:
-            combo = curr + char
-            if combo in dictionary:
-                curr = combo
-            else:
-                full_codes.append(dictionary[curr])
-                if next_code < 65536:
-                    dictionary[combo] = next_code
-                    next_code += 1
-                curr = char
-        if curr:
-            full_codes.append(dictionary[curr])
-
+        # Reuse the shared encoder instead of re-implementing it, so the
+        # verifier can never drift from the compressor.
+        full_codes, _, _ = _lzw_encode(original_text)
         decompressed = lzw_decompress(full_codes)
         comp_res["is_lossless"] = (decompressed == original_text)
         comp_res["decompressed_preview"] = decompressed[:150] + ("..." if len(decompressed) > 150 else "")

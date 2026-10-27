@@ -55,21 +55,26 @@ def knapsack_dynamic_programming(
     total_value = dp[n][capacity]
 
     selected: List[Dict[str, Any]] = []
+    selected_indices: List[int] = []
     w = capacity
     for i in range(n, 0, -1):
         if dp[i][w] != dp[i - 1][w]:
             item = items[i - 1]
             selected.append(item)
+            # Track the real position instead of items.index(it), which resolves
+            # duplicated item dicts to the first matching index.
+            selected_indices.append(i - 1)
             w -= int(item["weight"])
 
     selected.reverse()
+    selected_indices.reverse()
     total_weight = sum(item["weight"] for item in selected)
     elapsed_us = (time.perf_counter() - start_time) * 1_000_000
 
     return {
         "method": "Dynamic Programming (Exact)",
         "selected_items": selected,
-        "selected_indices": [items.index(it) for it in selected],
+        "selected_indices": selected_indices,
         "total_value": total_value,
         "total_weight": total_weight,
         "capacity": capacity,
@@ -104,20 +109,25 @@ def knapsack_greedy(
             "why_result": "Walang solusyon sa bakanteng inputs."
         }
 
+    # Sort by value-to-weight ratio while remembering each item's original index,
+    # so duplicate items keep their true positions in the returned indices.
+    indexed_items = list(enumerate(items))
     sorted_items = sorted(
-        items,
-        key=lambda it: it["value"] / max(1, it["weight"]),
+        indexed_items,
+        key=lambda pair: pair[1]["value"] / max(1, pair[1]["weight"]),
         reverse=True
     )
 
     selected: List[Dict[str, Any]] = []
+    selected_indices: List[int] = []
     current_weight = 0
     total_value = 0
 
-    for item in sorted_items:
+    for original_index, item in sorted_items:
         wt = item["weight"]
         if current_weight + wt <= capacity:
             selected.append(item)
+            selected_indices.append(original_index)
             current_weight += wt
             total_value += item["value"]
 
@@ -125,7 +135,7 @@ def knapsack_greedy(
     return {
         "method": "Greedy Heuristic (Ratio)",
         "selected_items": selected,
-        "selected_indices": [items.index(it) for it in selected],
+        "selected_indices": selected_indices,
         "total_value": total_value,
         "total_weight": current_weight,
         "capacity": capacity,
@@ -198,10 +208,12 @@ def run_genetic_algorithm(
         ]
 
     n = len(items)
-    random.seed(42)
+    # Use a dedicated Random instance so the global RNG state (used by Monte
+    # Carlo sampling and Randomized QuickSort/QuickSelect) is never clobbered.
+    rng = random.Random(42)
 
     population: List[List[int]] = [
-        [1 if random.random() < 0.3 else 0 for _ in range(n)]
+        [1 if rng.random() < 0.3 else 0 for _ in range(n)]
         for _ in range(population_size)
     ]
 
@@ -234,15 +246,15 @@ def run_genetic_algorithm(
 
         while len(new_population) < population_size:
             def tournament() -> List[int]:
-                candidates = random.sample(range(population_size), 3)
+                candidates = rng.sample(range(population_size), 3)
                 best_cand = max(candidates, key=lambda idx: fitness_scores[idx])
                 return population[best_cand]
 
             parent1 = tournament()
             parent2 = tournament()
 
-            if random.random() < crossover_rate and n > 1:
-                cx_point = random.randint(1, n - 1)
+            if rng.random() < crossover_rate and n > 1:
+                cx_point = rng.randint(1, n - 1)
                 child1 = parent1[:cx_point] + parent2[cx_point:]
                 child2 = parent2[:cx_point] + parent1[cx_point:]
             else:
@@ -251,7 +263,7 @@ def run_genetic_algorithm(
 
             for child in (child1, child2):
                 for gene_idx in range(n):
-                    if random.random() < mutation_rate:
+                    if rng.random() < mutation_rate:
                         child[gene_idx] = 1 - child[gene_idx]
                 new_population.append(child)
                 if len(new_population) >= population_size:

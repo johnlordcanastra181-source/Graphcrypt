@@ -30,6 +30,11 @@ class GraphEditor {
         this.visitedNodeIds = new Set();
         this.evaluatedEdgeIds = new Set();
         this.currentNodeId = null;
+        this.lastPathNodes = [];
+        this.sparks = [];
+        this.sparkAnimId = null;
+        this.sparkSegments = [];
+        this.sparkTotalLength = 0;
 
         // Pan & Zoom
         this.zoom = 1.0;
@@ -201,8 +206,22 @@ class GraphEditor {
             const pt = this.getCanvasCoords(e);
             this.draggedNode.x = Math.max(20, pt.x - this.dragOffsetX);
             this.draggedNode.y = Math.max(20, pt.y - this.dragOffsetY);
-            this.render();
+            this.scheduleRender();
         }
+    }
+
+    /**
+     * Coalesces render() calls into one per animation frame. Dragging fires
+     * mousemove at ~60Hz; rebuilding the entire SVG on every event was the
+     * main source of canvas lag on larger graphs.
+     */
+    scheduleRender() {
+        if (this._renderScheduled) return;
+        this._renderScheduled = true;
+        requestAnimationFrame(() => {
+            this._renderScheduled = false;
+            this.render();
+        });
     }
 
     handleCanvasMouseUp(e) {
@@ -313,6 +332,12 @@ class GraphEditor {
             selTarget.innerHTML += `<option value="${node.id}">${node.name}</option>`;
         }
 
+        // Re-enable the selectors: promptEditEdgeWeight disables them, and
+        // without this reset every later Add Edge modal opens with frozen
+        // source/target dropdowns.
+        selSource.disabled = false;
+        selTarget.disabled = false;
+
         selSource.value = sourceId;
         selTarget.value = targetId;
         
@@ -363,6 +388,9 @@ class GraphEditor {
     render() {
         this.renderEdges();
         this.renderNodes();
+        if (this.lastPathNodes && this.lastPathNodes.length >= 2 && this.sparkAnimId) {
+            this.recalculateSparkSegments();
+        }
     }
 
     renderEdges() {
@@ -379,7 +407,18 @@ class GraphEditor {
             const isEvaluated = this.evaluatedEdgeIds.has(edge.id);
             const isSelected = this.selectedEdgeId === edge.id;
 
-            // Draw Edge Line
+            // 1. Blazing Fire Outer Heat Aura (behind main edge)
+            if (isPath) {
+                const auraLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                auraLine.setAttribute('x1', sourceNode.x);
+                auraLine.setAttribute('y1', sourceNode.y);
+                auraLine.setAttribute('x2', targetNode.x);
+                auraLine.setAttribute('y2', targetNode.y);
+                auraLine.setAttribute('class', 'graph-edge-fire-aura');
+                this.edgesLayer.appendChild(auraLine);
+            }
+
+            // 2. Draw Main Edge Line
             const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
             line.setAttribute('x1', sourceNode.x);
             line.setAttribute('y1', sourceNode.y);
@@ -405,12 +444,25 @@ class GraphEditor {
 
             this.edgesLayer.appendChild(line);
 
+            // 3. Blazing Fire White-Hot Molten Core (on top of main edge)
+            if (isPath) {
+                const coreLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                coreLine.setAttribute('x1', sourceNode.x);
+                coreLine.setAttribute('y1', sourceNode.y);
+                coreLine.setAttribute('x2', targetNode.x);
+                coreLine.setAttribute('y2', targetNode.y);
+                coreLine.setAttribute('class', 'graph-edge-fire-core');
+                this.edgesLayer.appendChild(coreLine);
+            }
+
             // Draw Weight Pill Badge at Center of Edge
             const midX = (sourceNode.x + targetNode.x) / 2;
             const midY = (sourceNode.y + targetNode.y) / 2;
 
             const gWeight = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            gWeight.setAttribute('class', 'edge-weight-group');
+            let weightClasses = 'edge-weight-group';
+            if (isPath) weightClasses += ' path-active';
+            gWeight.setAttribute('class', weightClasses);
             gWeight.setAttribute('transform', `translate(${midX}, ${midY})`);
             gWeight.dataset.edgeId = edge.id;
 
@@ -424,17 +476,10 @@ class GraphEditor {
             rect.setAttribute('width', textWidth);
             rect.setAttribute('height', textHeight);
             rect.setAttribute('class', 'edge-weight-bg');
-            if (isPath) {
-                rect.style.stroke = '#00F0FF';
-                rect.style.fill = '#0C1E3D';
-            }
 
             const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             text.setAttribute('class', 'edge-weight-text');
             text.textContent = weightText;
-            if (isPath) {
-                text.style.fill = '#00F0FF';
-            }
 
             gWeight.appendChild(rect);
             gWeight.appendChild(text);
@@ -587,14 +632,24 @@ class GraphEditor {
         }
     }
 
-    // Set highlights from A* pathfinding
+    // ==========================================
+    // BLAZING FIRE ROUTE FINDING VISUALIZATION
+    // ==========================================
+
     setPathHighlights(pathNodes = [], pathEdges = [], visitedNodes = [], evaluatedEdges = [], currentNode = null) {
         this.pathNodeIds = new Set(pathNodes);
         this.pathEdgeIds = new Set(pathEdges);
         this.visitedNodeIds = new Set(visitedNodes);
         this.evaluatedEdgeIds = new Set(evaluatedEdges);
         this.currentNodeId = currentNode;
+        this.lastPathNodes = Array.isArray(pathNodes) ? [...pathNodes] : [];
         this.render();
+
+        if (this.lastPathNodes.length >= 2) {
+            this.startBlazingFireParticles();
+        } else {
+            this.stopBlazingFireParticles();
+        }
     }
 
     clearHighlights() {
@@ -603,6 +658,147 @@ class GraphEditor {
         this.visitedNodeIds.clear();
         this.evaluatedEdgeIds.clear();
         this.currentNodeId = null;
+        this.lastPathNodes = [];
+        this.stopBlazingFireParticles();
         this.render();
+    }
+
+    recalculateSparkSegments() {
+        if (!this.lastPathNodes || this.lastPathNodes.length < 2) {
+            this.sparkSegments = [];
+            this.sparkTotalLength = 0;
+            return;
+        }
+
+        const pts = [];
+        for (const nodeId of this.lastPathNodes) {
+            const n = this.nodes.get(nodeId);
+            if (n) pts.push({ x: n.x, y: n.y });
+        }
+
+        if (pts.length < 2) {
+            this.sparkSegments = [];
+            this.sparkTotalLength = 0;
+            return;
+        }
+
+        const segments = [];
+        let totalLen = 0;
+        for (let i = 0; i < pts.length - 1; i++) {
+            const dx = pts[i + 1].x - pts[i].x;
+            const dy = pts[i + 1].y - pts[i].y;
+            const len = Math.hypot(dx, dy) || 0.001;
+            segments.push({
+                p1: pts[i],
+                p2: pts[i + 1],
+                dx,
+                dy,
+                len,
+                nx: -dy / len,
+                ny: dx / len,
+                startDist: totalLen,
+                endDist: totalLen + len
+            });
+            totalLen += len;
+        }
+
+        this.sparkSegments = segments;
+        this.sparkTotalLength = totalLen;
+    }
+
+    startBlazingFireParticles() {
+        this.stopBlazingFireParticles();
+        this.recalculateSparkSegments();
+
+        if (!this.animationLayer || this.sparkSegments.length === 0 || this.sparkTotalLength <= 0) {
+            return;
+        }
+
+        const sparkColors = ['#FFFFFF', '#FFF7C2', '#FFE033', '#FF9D00', '#FF5500', '#FF1A00'];
+        const sparkCount = Math.min(60, Math.max(28, Math.floor(this.sparkTotalLength / 22)));
+        this.sparks = [];
+
+        for (let i = 0; i < sparkCount; i++) {
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            const color = sparkColors[Math.floor(Math.random() * sparkColors.length)];
+            const radius = 2.0 + Math.random() * 3.6;
+            circle.setAttribute('r', radius.toFixed(1));
+            circle.setAttribute('fill', color);
+            circle.setAttribute('class', 'blazing-fire-spark');
+            circle.style.filter = `drop-shadow(0 0 ${2 + Math.random() * 4}px ${color})`;
+            this.animationLayer.appendChild(circle);
+
+            this.sparks.push({
+                el: circle,
+                dist: (i / sparkCount) * this.sparkTotalLength + (Math.random() * 16 - 8),
+                speed: 130 + Math.random() * 140,
+                baseRadius: radius,
+                swayAmp: 2.5 + Math.random() * 4.5,
+                swayFreq: 0.004 + Math.random() * 0.005,
+                phase: Math.random() * Math.PI * 2,
+                color: color
+            });
+        }
+
+        let lastTime = performance.now();
+        const animate = (timestamp) => {
+            const dt = Math.min(0.08, (timestamp - lastTime) / 1000);
+            lastTime = timestamp;
+
+            const total = this.sparkTotalLength;
+            if (total > 0 && this.sparkSegments.length > 0) {
+                for (let i = 0; i < this.sparks.length; i++) {
+                    const spark = this.sparks[i];
+                    spark.dist += spark.speed * dt;
+                    if (spark.dist > total) {
+                        spark.dist = spark.dist % total;
+                    } else if (spark.dist < 0) {
+                        spark.dist = 0;
+                    }
+
+                    // Locate active segment
+                    let seg = this.sparkSegments.find(s => spark.dist >= s.startDist && spark.dist <= s.endDist);
+                    if (!seg) seg = this.sparkSegments[this.sparkSegments.length - 1];
+
+                    const segT = Math.max(0, Math.min(1, (spark.dist - seg.startDist) / seg.len));
+                    const baseX = seg.p1.x + seg.dx * segT;
+                    const baseY = seg.p1.y + seg.dy * segT;
+
+                    // Lateral flame sway
+                    const sway = Math.sin(timestamp * spark.swayFreq + spark.phase) * spark.swayAmp;
+                    const posX = baseX + seg.nx * sway;
+                    const posY = baseY + seg.ny * sway;
+
+                    // Flame flicker opacity & pulsing radius
+                    const lifeT = spark.dist / total;
+                    const fade = Math.sin(lifeT * Math.PI);
+                    const flicker = 0.75 + 0.25 * Math.sin(timestamp * 0.02 + spark.phase);
+                    const opacity = Math.max(0.15, Math.min(1.0, fade * flicker * 1.3));
+                    const r = Math.max(1.2, spark.baseRadius * (0.85 + 0.35 * Math.sin(timestamp * 0.015 + spark.phase)));
+
+                    spark.el.setAttribute('cx', posX.toFixed(2));
+                    spark.el.setAttribute('cy', posY.toFixed(2));
+                    spark.el.setAttribute('r', r.toFixed(2));
+                    spark.el.setAttribute('opacity', opacity.toFixed(2));
+                }
+            }
+
+            this.sparkAnimId = requestAnimationFrame(animate);
+        };
+
+        this.sparkAnimId = requestAnimationFrame(animate);
+    }
+
+    stopBlazingFireParticles() {
+        if (this.sparkAnimId) {
+            cancelAnimationFrame(this.sparkAnimId);
+            this.sparkAnimId = null;
+        }
+        if (this.animationLayer) {
+            this.animationLayer.innerHTML = '';
+        }
+        this.sparks = [];
+        this.sparkSegments = [];
+        this.sparkTotalLength = 0;
     }
 }

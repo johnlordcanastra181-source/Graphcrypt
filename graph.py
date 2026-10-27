@@ -62,12 +62,30 @@ class Graph:
     def __init__(self):
         self.nodes: Dict[str, GraphNode] = {}
         self.edges: Dict[str, GraphEdge] = {}
+        # Adjacency index: node_id -> list of edge_ids. Keeps get_neighbors()
+        # O(degree) instead of scanning every edge on each A* expansion.
+        self._adjacency: Dict[str, List[str]] = {}
         self.load_sample_graph()
 
     def clear(self) -> None:
         """Clear all nodes and edges."""
         self.nodes.clear()
         self.edges.clear()
+        self._adjacency.clear()
+
+    def _index_edge(self, edge: GraphEdge) -> None:
+        """Registers an edge in the adjacency index for both of its endpoints."""
+        self._adjacency.setdefault(edge.source, []).append(edge.id)
+        if edge.target != edge.source:
+            self._adjacency.setdefault(edge.target, []).append(edge.id)
+
+    def _unindex_edge(self, edge_id: str) -> None:
+        """Removes an edge from the adjacency index."""
+        for node_id, edge_ids in list(self._adjacency.items()):
+            if edge_id in edge_ids:
+                edge_ids.remove(edge_id)
+            if not edge_ids:
+                del self._adjacency[node_id]
 
     def load_sample_graph(self) -> None:
         """
@@ -175,8 +193,10 @@ class Graph:
         ]
         for e_id in edges_to_remove:
             del self.edges[e_id]
+            self._unindex_edge(e_id)
 
         del self.nodes[node_id]
+        self._adjacency.pop(node_id, None)
 
     def add_edge(self, source: str, target: str, weight: float, edge_id: Optional[str] = None) -> GraphEdge:
         source = str(source).strip()
@@ -208,6 +228,7 @@ class Graph:
         
         edge = GraphEdge(edge_id, source, target, num_weight)
         self.edges[edge_id] = edge
+        self._index_edge(edge)
         return edge
 
     def update_edge_weight(self, edge_id: str, weight: float) -> GraphEdge:
@@ -230,14 +251,19 @@ class Graph:
         if edge_id not in self.edges:
             raise KeyError(f"Edge '{edge_id}' not found.")
         del self.edges[edge_id]
+        self._unindex_edge(edge_id)
 
     def get_neighbors(self, node_id: str) -> List[Tuple[str, float, str]]:
         """
         Returns list of (neighbor_node_id, edge_weight, edge_id) for a given node.
         Edges are undirected in this graph model so pathfinding can traverse either way.
+        Uses the adjacency index, so this is O(degree) rather than O(E).
         """
         neighbors = []
-        for edge_id, edge in self.edges.items():
+        for edge_id in self._adjacency.get(node_id, ()):
+            edge = self.edges.get(edge_id)
+            if edge is None:
+                continue
             if edge.source == node_id:
                 neighbors.append((edge.target, edge.weight, edge_id))
             elif edge.target == node_id:

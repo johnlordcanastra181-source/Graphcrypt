@@ -31,15 +31,18 @@ class CryptoUIController {
         this.btnGenerateTxt = document.getElementById('btn-generate-txt');
         this.btnExportTxt = document.getElementById('btn-export-txt');
 
-        // State
+        // State. The path is intentionally empty at boot: the server owns the
+        // authoritative A* result, and a hardcoded sample path went stale
+        // after any graph edit. syncPathFromServer() fills this in.
         this.currentShift = 3;
-        this.currentPathNodes = ['A', 'C', 'F', 'J', 'P', 'R', 'S', 'T'];
-        this.currentTotalWeight = 1382.6;
+        this.currentPathNodes = [];
+        this.currentTotalWeight = 0;
         this.currentHeuristic = 'Euclidean Distance';
         this.formatType = 'concise'; // 'concise' or 'full'
         this.latestTransforms = null;
 
         this.initEvents();
+        this.updateResultsSummary();
     }
 
     initEvents() {
@@ -132,6 +135,30 @@ class CryptoUIController {
         this.updateResultsSummary();
         this.fetchTransformations();
         this.fetchTxtPreview();
+    }
+
+    /**
+     * Pulls the authoritative A* path from the server. The server keeps the
+     * last result in `last_astar_result`, so this keeps the Encryption panel
+     * in sync after graph edits or a page reload, instead of relying on a
+     * hardcoded sample path.
+     */
+    async syncPathFromServer() {
+        try {
+            const response = await fetch('/api/astar/last');
+            const data = await response.json();
+            if (!response.ok || !data.success) return;
+
+            this.currentPathNodes = data.path || [];
+            this.currentTotalWeight = data.total_cost || 0.0;
+            this.currentHeuristic = data.heuristic_used || 'Euclidean Distance';
+
+            this.updateResultsSummary();
+            this.fetchTransformations();
+            this.fetchTxtPreview();
+        } catch (err) {
+            console.error('Failed to sync A* path from server:', err);
+        }
     }
 
     updateResultsSummary() {

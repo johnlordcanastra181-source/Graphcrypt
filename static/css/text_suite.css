@@ -61,7 +61,7 @@
     margin-top: 4px;
 }
 
-.bisu-badge {
+.course-badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -219,6 +219,22 @@
     white-space: pre-wrap;
     word-break: break-all;
     color: #CBD5E1;
+}
+
+/* Empty-state hint. The container uses white-space: pre-wrap so the corpus
+   keeps its line breaks, which means any raw indentation in the markup would
+   be rendered literally. The hint is its own centred block instead. */
+.match-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    white-space: normal;
+    min-height: 170px;
+    color: #64748B;
+    font-style: italic;
+    font-family: var(--font-main);
+    font-size: 0.85rem;
 }
 
 .match-hl {

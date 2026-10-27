@@ -113,20 +113,20 @@ class TextSuiteController {
         const placeholders = {
             en: {
                 pattern: 'Select any algorithm above and click "Search" to view the complete step-by-step breakdown of how and why the output was produced.',
-                compression: 'Click "▶ Compress Text" or "⚡ Compare All 3 Methods" to see why file sizes change, how codebooks/dictionaries are structured, and why decompression is 100% lossless.',
-                optimization: 'Click "▶ Run Genetic Algorithm" or "Compare DP vs Greedy" to see how fitness scores evolve across generations and why Dynamic Programming guarantees global optimality.',
+                compression: 'Click "Compress Text" or "⚡ Compare All 3 Methods" to see why file sizes change, how codebooks/dictionaries are structured, and why decompression is 100% lossless.',
+                optimization: 'Click "Run Genetic Algorithm" or "Compare DP vs Greedy" to see how fitness scores evolve across generations and why Dynamic Programming guarantees global optimality.',
                 parallel: 'Click "▶ Execute Parallel Search" or "▶ Run Randomized QuickSort" to see how thread chunks handle boundary overlaps and how uniform random pivots prevent O(n²) worst-case slowdowns.'
             },
             tl: {
                 pattern: 'Piliin ang alinmang algorithm sa itaas at pindutin ang "Search" upang makita ang buong step-by-step breakdown kung paano at bakit nito nakuha ang nasabing output.',
-                compression: 'Pindutin ang "▶ Compress Text" o "⚡ Compare All 3 Methods" upang makita ang buong paliwanag kung bakit lumiliit ang file, paano nabuo ang prefix codebook o diksyunaryo, at bakit 100% lossless ang decompression.',
-                optimization: 'Pindutin ang "▶ Run Genetic Algorithm" o "Compare DP vs Greedy" upang makita ang buong paliwanag kung paano nag-evolve ang fitness score bawat henerasyon at bakit guaranteed global optimum ang Dynamic Programming table.',
+                compression: 'Pindutin ang "Compress Text" o "⚡ Compare All 3 Methods" upang makita ang buong paliwanag kung bakit lumiliit ang file, paano nabuo ang prefix codebook o diksyunaryo, at bakit 100% lossless ang decompression.',
+                optimization: 'Pindutin ang "Run Genetic Algorithm" o "Compare DP vs Greedy" upang makita ang buong paliwanag kung paano nag-evolve ang fitness score bawat henerasyon at bakit guaranteed global optimum ang Dynamic Programming table.',
                 parallel: 'Pindutin ang "▶ Execute Parallel Search" o "▶ Run Randomized QuickSort" upang makita kung paano gumana ang boundary overlap margins sa thread chunks at bakit napigilan ng uniform random pivots ang O(n²) worst-case slowdown.'
             },
             ceb: {
                 pattern: 'Pilia ang bisan unsa nga algorithm sa ibabaw ug pindota ang "Search" aron makita ang tibuok lakang-sa-lakang nga katin-awan kon giunsa ug ngano nga nakuha ang maong resulta.',
-                compression: 'Pindota ang "▶ Compress Text" o "⚡ Compare All 3 Methods" aron makita kon ngano nimenos ang gidak-on sa file, giunsa paghimo ang codebook/diksyunaryo, ug ngano nga 100% lossless ang decompression.',
-                optimization: 'Pindota ang "▶ Run Genetic Algorithm" o "Compare DP vs Greedy" aron makita kon giunsa pag-uswag ang fitness score sa matag henerasyon ug ngano nga garantisadong global optimum ang Dynamic Programming.',
+                compression: 'Pindota ang "Compress Text" o "⚡ Compare All 3 Methods" aron makita kon ngano nimenos ang gidak-on sa file, giunsa paghimo ang codebook/diksyunaryo, ug ngano nga 100% lossless ang decompression.',
+                optimization: 'Pindota ang "Run Genetic Algorithm" o "Compare DP vs Greedy" aron makita kon giunsa pag-uswag ang fitness score sa matag henerasyon ug ngano nga garantisadong global optimum ang Dynamic Programming.',
                 parallel: 'Pindota ang "▶ Execute Parallel Search" o "▶ Run Randomized QuickSort" aron makita kon giunsa paglihok sa boundary overlap margin sa mga tipak ug ngano nga ang random pivots nakapugong sa O(n²) worst-case nga paghinay.'
             }
         };
@@ -347,7 +347,6 @@ class TextSuiteController {
     renderPatternResults(data, text, pattern) {
         this.lastResults.pattern = { data, text, pattern };
 
-        const summaryBox = document.getElementById('pattern-results-summary');
         const highlightBox = document.getElementById('pattern-highlight-viewer');
         const compTable = document.getElementById('pattern-comparison-table-body');
         const flowContainer = document.getElementById('pattern-flow-content');
@@ -541,10 +540,17 @@ class TextSuiteController {
             }
         }
 
-        // Update summary badges
-        if (summaryBox) {
-            document.getElementById('stat-pattern-matches').textContent = matchCount;
-            document.getElementById('stat-pattern-indices').textContent = matchIndices.slice(0, 15).join(', ') + (matchIndices.length > 15 ? '...' : '');
+        // Update summary badges. These tiles exist in the DOM as
+        // 'stat-pattern-matches' / 'stat-pattern-indices'; the previous code
+        // gated this on a non-existent 'pattern-results-summary' element, so
+        // the tiles never updated.
+        const matchesTile = document.getElementById('stat-pattern-matches');
+        const indicesTile = document.getElementById('stat-pattern-indices');
+        if (matchesTile) matchesTile.textContent = matchCount;
+        if (indicesTile) {
+            indicesTile.textContent = matchIndices.length
+                ? matchIndices.slice(0, 15).join(', ') + (matchIndices.length > 15 ? '...' : '')
+                : '-';
         }
 
         // Render highlighted text
@@ -1364,16 +1370,21 @@ class TextSuiteController {
                 body: JSON.stringify({ items: tokens, k: Math.min(k, tokens.length - 1) })
             });
             const data = await res.json();
-            if (data.success) {
-                document.getElementById('quickselect-result').textContent = `Rank k=${data.k} Element: "${data.element}" (${data.time_microseconds} µs)`;
-                
-                this.lastResults.quickSelect = data;
-                this.lastResults.parallelSearch = null;
-                this.lastResults.randomSort = null;
-                this.renderQuickSelectFlow(data);
-
-                window.showToast(`QuickSelect resolved rank ${data.k} in O(n) expected time.`, 'success');
+            if (!res.ok || !data.success) {
+                // The server returns 400 with an error message for an
+                // out-of-range rank; surface it instead of rendering "null".
+                window.showToast(data.error || 'QuickSelect failed', 'error');
+                return;
             }
+
+            document.getElementById('quickselect-result').textContent = `Rank k=${data.k} Element: "${data.element}" (${data.time_microseconds} µs)`;
+
+            this.lastResults.quickSelect = data;
+            this.lastResults.parallelSearch = null;
+            this.lastResults.randomSort = null;
+            this.renderQuickSelectFlow(data);
+
+            window.showToast(`QuickSelect resolved rank ${data.k} in O(n) expected time.`, 'success');
         } catch (err) {
             window.showToast('Quickselect error.', 'error');
         }

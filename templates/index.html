@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Intelligent Text Search, Compression, and Optimization System | BISU Final Project & GraphCrypt</title>
+    <title>Intelligent Text Search, Compression, and Optimization System | GraphCrypt</title>
     
     <!-- Offline Native Font Fallbacks (Inter / JetBrains Mono / Segoe UI / Consolas) -->
     
@@ -33,7 +33,7 @@
                         </svg>
                     </div>
                     <div class="brand-text">
-                        <h1 class="brand-title">GraphCrypt <span class="version-tag">BISU v2.0</span></h1>
+                        <h1 class="brand-title">GraphCrypt <span class="version-tag">v2.0</span></h1>
                         <span class="brand-subtitle">INTELLIGENT ALGORITHM SUITE</span>
                     </div>
                 </div>
@@ -43,7 +43,7 @@
             <div class="sidebar-action-top">
                 <button id="btn-new-project" class="btn btn-purple btn-block">
                     <i data-lucide="plus" class="btn-icon"></i>
-                    <span>+ New Project</span>
+                    <span>New Project</span>
                 </button>
             </div>
 
@@ -93,14 +93,6 @@
                     <span>Complexity Matrix</span>
                 </button>
             </nav>
-
-            <!-- Sidebar Footer -->
-            <div class="sidebar-footer">
-                <button id="btn-about" class="nav-item nav-item-footer">
-                    <i data-lucide="info" class="nav-icon"></i>
-                    <span>About</span>
-                </button>
-            </div>
         </aside>
 
         <!-- ============================================== -->
@@ -108,43 +100,13 @@
         <!-- ============================================== -->
         <main class="main-viewport">
             
-            <!-- Top Workflow Breadcrumbs Bar -->
+            <!-- Top Status Bar -->
             <header class="workflow-header">
-                <div class="workflow-breadcrumbs" id="workflow-tracker">
-                    <div class="wf-step completed" data-step="1" id="wf-step-1">
-                        <span class="wf-dot"><i data-lucide="check" class="wf-check-icon"></i></span>
-                        <span class="wf-label">Weighted Graph</span>
-                    </div>
-                    <span class="wf-separator">&gt;</span>
-
-                    <div class="wf-step active" data-step="2" id="wf-step-2">
-                        <span class="wf-dot"><span class="wf-dot-inner"></span></span>
-                        <span class="wf-label">Run A*</span>
-                    </div>
-                    <span class="wf-separator">&gt;</span>
-
-                    <div class="wf-step" data-step="3" id="wf-step-3">
-                        <span class="wf-dot"><span class="wf-dot-inner"></span></span>
-                        <span class="wf-label">Shortest Path</span>
-                    </div>
-                    <span class="wf-separator">&gt;</span>
-
-                    <div class="wf-step" data-step="4" id="wf-step-4">
-                        <span class="wf-dot"><span class="wf-dot-inner"></span></span>
-                        <span class="wf-label">Encrypt Edge Weights</span>
-                    </div>
-                    <span class="wf-separator">&gt;</span>
-
-                    <div class="wf-step" data-step="5" id="wf-step-5">
-                        <span class="wf-dot"><span class="wf-dot-inner"></span></span>
-                        <span class="wf-label">Generate TXT</span>
-                    </div>
-                    <span class="wf-separator">&gt;</span>
-
-                    <div class="wf-step" data-step="6" id="wf-step-6">
-                        <span class="wf-dot"><span class="wf-dot-inner"></span></span>
-                        <span class="wf-label">Export</span>
-                    </div>
+                <div class="running-header" id="running-header">
+                    <span class="running-dot" aria-hidden="true"></span>
+                    <span class="running-title"><strong>GraphCrypt</strong></span>
+                    <span class="running-divider" aria-hidden="true"></span>
+                    <span class="running-subtitle">Precision Algorithm Engine</span>
                 </div>
 
                 <div class="header-tools">
@@ -158,9 +120,6 @@
 
                     <button id="btn-quick-sample" class="btn-icon-header" title="Reload Sample Graph">
                         <i data-lucide="rotate-ccw"></i>
-                    </button>
-                    <button id="btn-settings-dialog" class="btn-icon-header" title="Settings">
-                        <i data-lucide="settings"></i>
                     </button>
                     <button id="btn-help-dialog" class="btn-icon-header" title="Help Guide">
                         <i data-lucide="help-circle"></i>
@@ -243,6 +202,42 @@
                                             <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
                                             <feMerge>
                                                 <feMergeNode in="coloredBlur"/>
+                                                <feMergeNode in="SourceGraphic"/>
+                                            </feMerge>
+                                        </filter>
+                                                                            <!-- ============================================== -->
+                                        <!-- BLAZING FIRE ROUTE EFFECT FILTERS & GRADIENTS  -->
+                                        <!-- ============================================== -->
+                                        <radialGradient id="blazing-fire-node-gradient" cx="50%" cy="50%" r="70%">
+                                            <stop offset="0%" stop-color="#FFF2A3" stop-opacity="1"/>
+                                            <stop offset="25%" stop-color="#FF9D00" stop-opacity="1"/>
+                                            <stop offset="65%" stop-color="#D92200" stop-opacity="1"/>
+                                            <stop offset="100%" stop-color="#240400" stop-opacity="1"/>
+                                        </radialGradient>
+
+                                        <linearGradient id="blazing-fire-line-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stop-color="#FF1A00"/>
+                                            <stop offset="20%" stop-color="#FF5500"/>
+                                            <stop offset="50%" stop-color="#FFE033"/>
+                                            <stop offset="80%" stop-color="#FF5500"/>
+                                            <stop offset="100%" stop-color="#FF1A00"/>
+                                        </linearGradient>
+
+                                        <radialGradient id="blazing-spark-gradient" cx="50%" cy="50%" r="50%">
+                                            <stop offset="0%" stop-color="#FFFFFF" stop-opacity="1"/>
+                                            <stop offset="35%" stop-color="#FFDF4D" stop-opacity="0.9"/>
+                                            <stop offset="75%" stop-color="#FF5100" stop-opacity="0.6"/>
+                                            <stop offset="100%" stop-color="#CC0000" stop-opacity="0"/>
+                                        </radialGradient>
+
+                                        <filter id="blazing-fire-glow" x="-100%" y="-100%" width="300%" height="300%">
+                                            <feGaussianBlur stdDeviation="9" in="SourceGraphic" result="deepHeat"/>
+                                            <feGaussianBlur stdDeviation="4.5" in="SourceGraphic" result="midBlaze"/>
+                                            <feGaussianBlur stdDeviation="1.5" in="SourceGraphic" result="hotCore"/>
+                                            <feMerge>
+                                                <feMergeNode in="deepHeat"/>
+                                                <feMergeNode in="midBlaze"/>
+                                                <feMergeNode in="hotCore"/>
                                                 <feMergeNode in="SourceGraphic"/>
                                             </feMerge>
                                         </filter>
@@ -337,7 +332,7 @@
                                 <div class="action-buttons-stack">
                                     <button id="btn-run-astar" class="btn btn-purple btn-large btn-block btn-glow">
                                         <i data-lucide="play" class="btn-icon"></i>
-                                        <span>▶ Run Algorithm</span>
+                                        <span>Run Algorithm</span>
                                     </button>
 
                                     <div class="step-controls-row">
@@ -398,7 +393,7 @@
                                     <span id="step-counter-tag" class="step-tag">Ready</span>
                                 </div>
                                 <div id="step-log-body" class="log-body">
-                                    <div class="log-entry info">System ready. Click "▶ Run Algorithm" to initiate weighted A* search.</div>
+                                    <div class="log-entry info">System ready. Click "Run Algorithm" to initiate weighted A* search.</div>
                                 </div>
                             </div>
 
@@ -516,19 +511,13 @@
                                 <div class="summary-field">
                                     <span class="summary-label">Shortest Path</span>
                                     <div id="summary-path-display" class="summary-path-box">
-                                        <span class="path-node-pill">A</span>
-                                        <span class="path-arrow">→</span>
-                                        <span class="path-node-pill">C</span>
-                                        <span class="path-arrow">→</span>
-                                        <span class="path-node-pill">D</span>
-                                        <span class="path-arrow">→</span>
-                                        <span class="path-node-pill">E</span>
+                                        <span class="text-dim">Run A* to compute the shortest path</span>
                                     </div>
                                 </div>
 
                                 <div class="summary-row-weight">
                                     <span class="summary-label">Total Original Weight</span>
-                                    <span id="summary-total-weight" class="summary-val-badge">11</span>
+                                    <span id="summary-total-weight" class="summary-val-badge">0</span>
                                 </div>
 
                                 <div class="summary-status-badge">
@@ -600,7 +589,7 @@ Heuristic: Euclidean Distance
                             </h2>
                             <p class="suite-header-subtitle">Load pre-configured datasets, upload custom .txt files, or input text directly for analysis.</p>
                         </div>
-                        <span class="bisu-badge"><i data-lucide="award"></i> BISU F-AQA-INS-002</span>
+                        <span class="course-badge"><i data-lucide="award"></i> F-AQA-INS-002</span>
                     </div>
 
                     <!-- Preset Samples -->
@@ -677,7 +666,7 @@ Heuristic: Euclidean Distance
                             </h2>
                             <p class="suite-header-subtitle">Knuth-Morris-Pratt, Boyer-Moore, Rabin-Karp, Brute Force & Approximate String Matching.</p>
                         </div>
-                        <span class="bisu-badge"><i data-lucide="check-circle-2"></i> All Matchers Enabled</span>
+                        <span class="course-badge"><i data-lucide="check-circle-2"></i> All Matchers Enabled</span>
                     </div>
 
                     <div class="suite-grid-2">
@@ -740,9 +729,7 @@ Heuristic: Euclidean Distance
 
                             <div class="form-group">
                                 <label class="form-label">Live Match Highlighting in Corpus:</label>
-                                <div id="pattern-highlight-viewer" class="match-highlight-container">
-                                    Click "Search" above to inspect highlighted pattern matches in text.
-                                </div>
+                                <div id="pattern-highlight-viewer" class="match-highlight-container"><span class="match-placeholder">Click "Search" above to inspect highlighted pattern matches in text.</span></div>
                             </div>
                         </div>
                     </div>
@@ -847,7 +834,7 @@ Heuristic: Euclidean Distance
                             <div style="display:flex; gap:10px; margin-top:14px;">
                                 <button id="btn-run-compression" class="btn btn-purple btn-large btn-block btn-glow">
                                     <i data-lucide="play" class="btn-icon"></i>
-                                    <span>▶ Compress Text</span>
+                                    <span>Compress Text</span>
                                 </button>
                                 <button id="btn-compress-compare-all" class="btn btn-cyan btn-large btn-block">
                                     <i data-lucide="layers" class="btn-icon"></i>
@@ -860,7 +847,7 @@ Heuristic: Euclidean Distance
                         <div class="glass-card" style="padding:20px;">
                             <div class="card-header-small"><span class="stats-card-title">ENCODING TELEMETRY & DICTIONARY</span></div>
                             <div id="comp-method-details" style="min-height:260px; margin-top:12px;">
-                                <div class="log-entry info">Click "▶ Compress Text" to inspect generated prefix codes or dictionary entries.</div>
+                                <div class="log-entry info">Click "Compress Text" to inspect generated prefix codes or dictionary entries.</div>
                             </div>
                         </div>
                     </div>
@@ -899,7 +886,7 @@ Heuristic: Euclidean Distance
                         </div>
                         <div id="compression-flow-content">
                             <div class="flow-summary-banner">
-                                Click "▶ Compress Text" or "⚡ Compare All 3 Methods" to see why file sizes change, how codebooks/dictionaries are structured, and why decompression is 100% lossless.
+                                Click "Compress Text" or "⚡ Compare All 3 Methods" to see why file sizes change, how codebooks/dictionaries are structured, and why decompression is 100% lossless.
                             </div>
                         </div>
                     </div>
@@ -917,7 +904,7 @@ Heuristic: Euclidean Distance
                             </h2>
                             <p class="suite-header-subtitle">Genetic Algorithm Metaheuristic & Combinatorial 0/1 Knapsack Optimization.</p>
                         </div>
-                        <span class="bisu-badge"><i data-lucide="trending-up"></i> Evolutionary & Exact Solvers</span>
+                        <span class="course-badge"><i data-lucide="trending-up"></i> Evolutionary & Exact Solvers</span>
                     </div>
 
                     <div class="suite-grid-2">
@@ -955,7 +942,7 @@ Heuristic: Euclidean Distance
                             <div style="display:flex; gap:10px; margin-top:16px;">
                                 <button id="btn-run-ga" class="btn btn-purple btn-large btn-block btn-glow">
                                     <i data-lucide="play" class="btn-icon"></i>
-                                    <span>▶ Run Genetic Algorithm</span>
+                                    <span>Run Genetic Algorithm</span>
                                 </button>
                                 <button id="btn-run-knapsack" class="btn btn-dark-outline btn-large btn-block">
                                     <i data-lucide="scale" class="btn-icon"></i>
@@ -1025,7 +1012,7 @@ Heuristic: Euclidean Distance
                         </div>
                         <div id="optimization-flow-content">
                             <div class="flow-summary-banner">
-                                Click "▶ Run Genetic Algorithm" or "Compare DP vs Greedy" to see how fitness scores evolve across generations and why Dynamic Programming guarantees global optimality.
+                                Click "Run Genetic Algorithm" or "Compare DP vs Greedy" to see how fitness scores evolve across generations and why Dynamic Programming guarantees global optimality.
                             </div>
                         </div>
                     </div>
@@ -1043,7 +1030,7 @@ Heuristic: Euclidean Distance
                             </h2>
                             <p class="suite-header-subtitle">Multi-Threaded Pattern Search with Speedup Telemetry & Randomized QuickSort / QuickSelect.</p>
                         </div>
-                        <span class="bisu-badge"><i data-lucide="cpu"></i> Multi-Threaded & Monte Carlo</span>
+                        <span class="course-badge"><i data-lucide="cpu"></i> Multi-Threaded & Monte Carlo</span>
                     </div>
 
                     <div class="suite-grid-2">
@@ -1180,11 +1167,11 @@ Heuristic: Euclidean Distance
                                 <i data-lucide="bar-chart-2"></i>
                                 <span>Performance Analysis & Complexity Matrix</span>
                             </h2>
-                            <p class="suite-header-subtitle">Theoretical Time & Space Complexity Formal Analysis (BISU Course Syllabus Requirement).</p>
+                            <p class="suite-header-subtitle">Theoretical Time & Space Complexity Formal Analysis (Course Syllabus Requirement).</p>
                         </div>
                         <button id="btn-run-full-benchmark" class="btn btn-purple btn-glow">
                             <i data-lucide="play" class="btn-icon"></i>
-                            <span>▶ Run Live Full Benchmark Suite</span>
+                            <span>Run Live Full Benchmark Suite</span>
                         </button>
                     </div>
 
