@@ -1008,6 +1008,44 @@ html, body {
     filter: drop-shadow(0 0 4px #FF5500);
 }
 
+.phoenix-crest-magenta-feather {
+    fill: url(#phoenix-crest-magenta);
+    stroke: #FF80AB;
+    stroke-width: 1px;
+    filter: drop-shadow(0 0 6px #FF1744);
+}
+
+.phoenix-wing-primary-feather {
+    fill: url(#phoenix-primary-feather-gradient);
+    stroke: #FFE57F;
+    stroke-width: 1.2px;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 6px #FF6D00) drop-shadow(0 0 12px #D50000);
+}
+
+.phoenix-tail-feather {
+    fill: url(#phoenix-primary-feather-gradient);
+    stroke: #FFA000;
+    stroke-width: 1.2px;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 6px #FF3D00);
+}
+
+.phoenix-tail-halo-ring {
+    fill: none;
+    stroke: url(#phoenix-tail-loop-gradient);
+    stroke-width: 3.5px;
+    stroke-linecap: round;
+    stroke-dasharray: 14 6;
+    animation: phoenixTailHaloSpin 1.4s linear infinite;
+    filter: drop-shadow(0 0 6px #FFE033) drop-shadow(0 0 14px #FF3D00);
+}
+
+@keyframes phoenixTailHaloSpin {
+    from { stroke-dashoffset: 40; }
+    to { stroke-dashoffset: 0; }
+}
+
 .phoenix-beak {
     fill: #FFE033;
     stroke: #E65100;

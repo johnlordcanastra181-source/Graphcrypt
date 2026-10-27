@@ -830,94 +830,135 @@ class GraphEditor {
         // --- A. Build Phoenix Avian Body & Head ---
         // Avian Torso
         const torso = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        torso.setAttribute('d', 'M -16,0 C -12,-8 4,-10 16,-6 C 24,-2 28,0 28,0 C 28,0 24,2 16,6 C 4,10 -12,8 -16,0 Z');
+        torso.setAttribute('d', 'M -18,0 C -14,-9 4,-11 18,-6 C 26,-2 30,0 30,0 C 30,0 26,2 18,6 C 4,11 -14,9 -18,0 Z');
         torso.setAttribute('class', 'phoenix-body-feather');
         bodyGroup.appendChild(torso);
 
         // Glowing Golden Hearth / Breast Shield
         const breast = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        breast.setAttribute('d', 'M -4,0 C 2,-5 12,-4 18,0 C 12,4 2,5 -4,0 Z');
+        breast.setAttribute('d', 'M -4,0 C 2,-6 14,-5 20,0 C 14,5 2,6 -4,0 Z');
         breast.setAttribute('fill', '#FFE033');
         breast.setAttribute('filter', 'drop-shadow(0 0 6px #FFFFFF)');
         bodyGroup.appendChild(breast);
 
         // Curved Golden Raptor Beak
         const beak = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        beak.setAttribute('d', 'M 24,-3 L 36,0 L 24,3 Q 26,0 24,-3 Z');
+        beak.setAttribute('d', 'M 25,-3.5 L 38,0 L 25,3.5 Q 27.5,0 25,-3.5 Z');
         beak.setAttribute('class', 'phoenix-beak');
         bodyGroup.appendChild(beak);
 
         // Piercing Glowing Eyes
         const eyeTop = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        eyeTop.setAttribute('cx', '20');
-        eyeTop.setAttribute('cy', '-3.2');
+        eyeTop.setAttribute('cx', '22');
+        eyeTop.setAttribute('cy', '-3.5');
         eyeTop.setAttribute('r', '2.2');
         eyeTop.setAttribute('class', 'phoenix-eye');
         bodyGroup.appendChild(eyeTop);
 
         const eyeBottom = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        eyeBottom.setAttribute('cx', '20');
-        eyeBottom.setAttribute('cy', '3.2');
+        eyeBottom.setAttribute('cx', '22');
+        eyeBottom.setAttribute('cy', '3.5');
         eyeBottom.setAttribute('r', '2.2');
         eyeBottom.setAttribute('class', 'phoenix-eye');
         bodyGroup.appendChild(eyeBottom);
 
-        // Regal Crown Crest Feathers (3 plumes swept backward)
-        const crestCenter = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        crestCenter.setAttribute('d', 'M 14,0 Q 2,-18 -22,-14 Q -4,-8 14,0 Z');
-        crestCenter.setAttribute('class', 'phoenix-crest-feather');
-        bodyGroup.appendChild(crestCenter);
+        // Vibrant Ruby-Magenta Crown Crest Feathers (Matches Phoenix Artwork)
+        const crestPlumes = [
+            { d: 'M 14,-3 C 6,-18 -10,-26 -28,-20 C -14,-14 4,-8 14,-3 Z', cls: 'phoenix-crest-magenta-feather' },
+            { d: 'M 17,-1 C 8,-14 -6,-22 -26,-15 C -10,-9 6,-4 17,-1 Z', cls: 'phoenix-crest-magenta-feather' },
+            { d: 'M 16,0 C 6,-10 -6,-16 -23,-10 C -8,-5 5,-2 16,0 Z', cls: 'phoenix-crest-magenta-feather' },
+            { d: 'M 14,2 C 6,-6 -6,-10 -21,-6 C -7,-2 5,0 14,2 Z', cls: 'phoenix-crest-magenta-feather' },
+            { d: 'M 12,4 C 4,-2 -6,-4 -18,-2 C -4,0 4,2 12,4 Z', cls: 'phoenix-crest-magenta-feather' },
+            { d: 'M 18,-2 C 8,-8 0,-10 -14,-6 C -2,-3 8,-1 18,-2 Z', cls: 'phoenix-crest-feather' },
+            { d: 'M 16,2 C 8,6 0,8 -14,5 C -2,2 8,1 16,2 Z', cls: 'phoenix-crest-feather' }
+        ];
 
-        const crestTop = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        crestTop.setAttribute('d', 'M 16,-3 Q 4,-14 -16,-12 Q -2,-6 16,-2 Z');
-        crestTop.setAttribute('class', 'phoenix-crest-feather');
-        bodyGroup.appendChild(crestTop);
+        for (const pl of crestPlumes) {
+            const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            p.setAttribute('d', pl.d);
+            p.setAttribute('class', pl.cls);
+            bodyGroup.appendChild(p);
+        }
 
-        const crestBottom = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        crestBottom.setAttribute('d', 'M 16,3 Q 4,14 -16,12 Q -2,6 16,2 Z');
-        crestBottom.setAttribute('class', 'phoenix-crest-feather');
-        bodyGroup.appendChild(crestBottom);
+        // Swirling Fire Halo Ring Around Tail Base (Signature feature in Phoenix artwork)
+        const haloRingGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        haloRingGroup.setAttribute('transform', 'translate(-22, 0)');
 
-        // --- B. Build Swinging Phoenix Wings ---
+        const haloOuter = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+        haloOuter.setAttribute('cx', '0');
+        haloOuter.setAttribute('cy', '0');
+        haloOuter.setAttribute('rx', '20');
+        haloOuter.setAttribute('ry', '12');
+        haloOuter.setAttribute('transform', 'rotate(-10)');
+        haloOuter.setAttribute('class', 'phoenix-tail-halo-ring');
+        haloRingGroup.appendChild(haloOuter);
+
+        const haloInner = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+        haloInner.setAttribute('cx', '0');
+        haloInner.setAttribute('cy', '0');
+        haloInner.setAttribute('rx', '14');
+        haloInner.setAttribute('ry', '8');
+        haloInner.setAttribute('transform', 'rotate(10)');
+        haloInner.setAttribute('class', 'phoenix-tail-halo-ring');
+        haloInner.style.animationDirection = 'reverse';
+        haloInner.style.animationDuration = '1.1s';
+        haloInner.style.strokeWidth = '2.2px';
+        haloRingGroup.appendChild(haloInner);
+
+        bodyGroup.appendChild(haloRingGroup);
+
+        // Cascading Tail Plumage Feathers
+        const tailFeatherPaths = [
+            'M -14,0 C -24,-5 -44,-4 -62,0 C -44,4 -24,5 -14,0 Z',
+            'M -14,-3 C -26,-10 -46,-12 -56,-8 C -40,-4 -26,-1 -14,-3 Z',
+            'M -14,3 C -26,10 -46,12 -56,8 C -40,4 -26,1 -14,3 Z',
+            'M -14,-5 C -28,-16 -44,-18 -50,-14 C -36,-9 -24,-3 -14,-5 Z',
+            'M -14,5 C -28,16 -44,18 -50,14 C -36,9 -24,3 -14,5 Z'
+        ];
+
+        for (const tfD of tailFeatherPaths) {
+            const tf = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            tf.setAttribute('d', tfD);
+            tf.setAttribute('class', 'phoenix-tail-feather');
+            bodyGroup.appendChild(tf);
+        }
+
+        // --- B. Build Swinging Phoenix Wings (7 Articulated Flame Blades) ---
         function createPhoenixWing(side) {
             const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             g.setAttribute('class', 'phoenix-wing-group');
 
-            // 4 Layered Sweeping Flame Feathers
-            // Feather 1 (Leading primary soaring feather - sweeps out to 56px)
-            const f1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            f1.setAttribute('d', `M 0,0 C 8,${side * 18} 12,${side * 36} -14,${side * 56} C -8,${side * 40} 0,${side * 20} 0,0 Z`);
-            f1.setAttribute('class', 'phoenix-wing-feather');
-            g.appendChild(f1);
+            // 7 Layered Articulated Flame Blades (Outermost soaring tip sweeps to 68px)
+            const wingFeatherDefs = [
+                `M 0,0 C 10,${side * 22} 16,${side * 45} -18,${side * 68} C -10,${side * 48} 0,${side * 24} 0,0 Z`,
+                `M 0,0 C 8,${side * 18} 12,${side * 38} -26,${side * 58} C -16,${side * 40} -4,${side * 20} 0,0 Z`,
+                `M 0,0 C 6,${side * 14} 8,${side * 30} -32,${side * 48} C -20,${side * 32} -6,${side * 16} 0,0 Z`,
+                `M 0,0 C 4,${side * 10} 5,${side * 24} -34,${side * 38} C -22,${side * 24} -6,${side * 12} 0,0 Z`,
+                `M 0,0 C 3,${side * 8} 3,${side * 18} -32,${side * 28} C -20,${side * 18} -6,${side * 8} 0,0 Z`,
+                `M 0,0 C 2,${side * 6} 2,${side * 12} -28,${side * 20} C -16,${side * 12} -4,${side * 6} 0,0 Z`,
+                `M 0,0 C 2,${side * 4} 2,${side * 8} -22,${side * 12} C -12,${side * 8} -4,${side * 4} 0,0 Z`
+            ];
 
-            // Feather 2 (Middle primary feather)
-            const f2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            f2.setAttribute('d', `M 0,0 C 6,${side * 14} 8,${side * 28} -22,${side * 46} C -14,${side * 32} -4,${side * 16} 0,0 Z`);
-            f2.setAttribute('class', 'phoenix-wing-feather');
-            g.appendChild(f2);
-
-            // Feather 3 (Secondary flight feather)
-            const f3 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            f3.setAttribute('d', `M 0,0 C 4,${side * 10} 4,${side * 22} -26,${side * 34} C -16,${side * 24} -6,${side * 10} 0,0 Z`);
-            f3.setAttribute('class', 'phoenix-wing-feather');
-            g.appendChild(f3);
-
-            // Feather 4 (Inner coverts)
-            const f4 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            f4.setAttribute('d', `M 0,0 C 2,${side * 6} 2,${side * 14} -26,${side * 20} C -16,${side * 14} -6,${side * 6} 0,0 Z`);
-            f4.setAttribute('class', 'phoenix-wing-feather');
-            g.appendChild(f4);
+            for (const d of wingFeatherDefs) {
+                const wf = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                wf.setAttribute('d', d);
+                wf.setAttribute('class', 'phoenix-wing-primary-feather');
+                g.appendChild(wf);
+            }
 
             // Radiating Golden Wing Struts
-            const strut1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            strut1.setAttribute('d', `M 0,0 C 8,${side * 18} 12,${side * 36} -14,${side * 56}`);
-            strut1.setAttribute('class', 'phoenix-wing-strut');
-            g.appendChild(strut1);
+            const strutDefs = [
+                `M 0,0 C 10,${side * 22} 16,${side * 45} -18,${side * 68}`,
+                `M 0,0 C 8,${side * 18} 12,${side * 38} -26,${side * 58}`,
+                `M 0,0 C 6,${side * 14} 8,${side * 30} -32,${side * 48}`
+            ];
 
-            const strut2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            strut2.setAttribute('d', `M 0,0 C 6,${side * 14} 8,${side * 28} -22,${side * 46}`);
-            strut2.setAttribute('class', 'phoenix-wing-strut');
-            g.appendChild(strut2);
+            for (const sd of strutDefs) {
+                const strut = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                strut.setAttribute('d', sd);
+                strut.setAttribute('class', 'phoenix-wing-strut');
+                g.appendChild(strut);
+            }
 
             return { group: g, side: side };
         }
@@ -1102,10 +1143,10 @@ class GraphEditor {
             }
 
             // --- D. Update Wingtip Vortex Sparks ---
-            const tipLX = px + cosA * (-14) - sinA * (-56 * wingScale);
-            const tipLY = py + sinA * (-14) + cosA * (-56 * wingScale);
-            const tipRX = px + cosA * (-14) - sinA * (56 * wingScale);
-            const tipRY = py + sinA * (-14) + cosA * (56 * wingScale);
+            const tipLX = px + cosA * (-18) - sinA * (-68 * wingScale);
+            const tipLY = py + sinA * (-18) + cosA * (-68 * wingScale);
+            const tipRX = px + cosA * (-18) - sinA * (68 * wingScale);
+            const tipRY = py + sinA * (-18) + cosA * (68 * wingScale);
 
             for (const wsp of wingSparks) {
                 const tipX = wsp.isLeft ? tipLX : tipRX;

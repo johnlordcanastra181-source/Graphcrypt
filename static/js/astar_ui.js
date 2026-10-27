@@ -158,9 +158,9 @@ class AStarUIController {
                     data.execution_time_ms
                 );
 
-                this.addLog(`🐉 Flaming Flying Phoenix route resolved: ${data.path.join(' → ')} (Total Cost: ${data.total_cost})`, 'success');
+                this.addLog(`🔥 Flaming Flying Phoenix route resolved: ${data.path.join(' → ')} (Total Cost: ${data.total_cost})`, 'success');
                 this.stepTag.textContent = `Completed (${totalSteps} steps)`;
-                window.showToast?.(`🐉 Flaming Flying Phoenix soaring along blazing path: ${data.path.join(' → ')} with cost ${data.total_cost}`, 'success');
+                window.showToast?.(`🔥 Flaming Flying Phoenix soaring along blazing path: ${data.path.join(' → ')} with cost ${data.total_cost}`, 'success');
 
                 // Notify crypto workflow to auto-update
                 if (window.cryptoUI) {
